@@ -21,7 +21,24 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', 
+        'status', 
     ];
+
+    // Constantes para roles
+    const ROLE_ADMIN = 'admin';
+    const ROLE_USER = 'user';
+
+    // Constantes para estados
+    const STATUS_ACTIVE = 'active';
+    const STATUS_INACTIVE = 'inactive';
+    const STATUS_SUSPENDED = 'suspended';
+
+    public function isAdmin()
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
 
     /**
      * The attributes that should be hidden for serialization.
