@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bienvenido | Justificaciones UAM</title>
     <!-- Fuentes -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
-      rel="stylesheet"
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"
     />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -59,17 +57,14 @@
               @endif
             </div>
           </div>
-          <!-- Sección derecha: Imagen o ilustración -->
-          <div class="md:w-1/2 py-12 pl-8 flex justify-center">
-            <img
-              src="{{ asset('images/logo-1.png') }}"
-              alt="Logo UAM"
-              class="w-56 h-56 object-contain rounded-xl shadow-lg"
-            />
-          </div>
+        </div>
+        <!-- Sección derecha: Imagen o ilustración -->
+        <div class="md:w-1/2 py-12 pl-8 flex justify-center">
+          <img src="{{ asset('images/logo-1_nobg.png') }}" alt="Logo UAM" class="w-56 h-56 object-contain rounded-xl shadow-lg bg-white"/>
+        </div>
         </div>
       </div>
-    </main>
+   </main>
 
     <footer class=" text-white py-12">
       <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
