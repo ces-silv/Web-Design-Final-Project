@@ -27,39 +27,39 @@
           <p class="text-xl mb-8 leading-relaxed">
             Regístrate para gestionar tus justificaciones de manera rápida, segura y sencilla.
           </p>
-          <form method="POST" action="{{ route('register') }}" class="bg-white/90 rounded-xl shadow-lg p-8 text-[#008D99]">
+          <form method="POST" action="{{ route('register') }}" class="bg-white/90 rounded-xl shadow-lg p-8">
             @csrf
 
             <!-- Name -->
             <div class="mb-4">
-              <label for="name" class="block font-semibold mb-1 text-white">Nombre</label>
+              <label for="name" class="block font-semibold mb-1 text-[#008D99]">Nombre</label>
               <input id="name" class="block w-full rounded-md px-4 py-2 border border-[#b2e6eb] text-gray-900 focus:ring-2 focus:ring-[#008D99] focus:border-[#008D99] transition" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder="Tu nombre completo" />
               <x-input-error :messages="$errors->get('name')" class="mt-2 text-sm text-red-600" />
             </div>
 
             <!-- Email Address -->
             <div class="mb-4">
-              <label for="email" class="block font-semibold mb-1 text-white">Correo electrónico</label>
+              <label for="email" class="block font-semibold mb-1 text-[#008D99]">Correo electrónico</label>
               <input id="email" class="block w-full rounded-md px-4 py-2 border border-[#b2e6eb] text-gray-900 focus:ring-2 focus:ring-[#008D99] focus:border-[#008D99] transition" type="email" name="email" value="{{ old('email') }}" required autocomplete="username" placeholder="ejemplo@correo.com" />
               <x-input-error :messages="$errors->get('email')" class="mt-2 text-sm text-red-600" />
             </div>
 
             <!-- Password -->
             <div class="mb-4">
-              <label for="password" class="block font-semibold mb-1 text-white">Contraseña</label>
+              <label for="password" class="block font-semibold mb-1 text-[#008D99]">Contraseña</label>
               <input id="password" class="block w-full rounded-md px-4 py-2 border border-[#b2e6eb] text-gray-900 focus:ring-2 focus:ring-[#008D99] focus:border-[#008D99] transition" type="password" name="password" required autocomplete="new-password" placeholder="********" />
               <x-input-error :messages="$errors->get('password')" class="mt-2 text-sm text-red-600" />
             </div>
 
             <!-- Confirm Password -->
             <div class="mb-6">
-              <label for="password_confirmation" class="block font-semibold mb-1 text-white">Confirmar contraseña</label>
+              <label for="password_confirmation" class="block font-semibold mb-1 text-[#008D99]">Confirmar contraseña</label>
               <input id="password_confirmation" class="block w-full rounded-md px-4 py-2 border border-[#b2e6eb] text-gray-900 focus:ring-2 focus:ring-[#008D99] focus:border-[#008D99] transition" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="********" />
               <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2 text-sm text-red-600" />
             </div>
 
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <a class="underline text-sm text-white hover:text-[#b2e6eb] transition" href="{{ route('login') }}">
+              <a class="underline text-sm text-[#008D99] hover:text-[#b2e6eb] transition" href="{{ route('login') }}">
                 ¿Ya tienes cuenta? Inicia sesión
               </a>
               <button
