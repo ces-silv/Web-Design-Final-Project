@@ -15,6 +15,10 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('about') }}" :active="request()->routeIs('about')">
+                        <i class="fa-solid fa-circle-info mr-2"></i>
+                        {{ __('Acerca de') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -70,6 +74,10 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('about') }}" :active="request()->routeIs('about')">
+                <i class="fas fa-info-circle mr-1"></i>
+                {{ __('Acerca de') }}
+            </x-responsive-nav-link>            
         </div>
 
         <!-- Responsive Settings Options -->
