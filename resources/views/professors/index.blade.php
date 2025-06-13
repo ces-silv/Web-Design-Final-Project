@@ -3,8 +3,8 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <span class="inline-flex items-center justifiy-center w-10 h-10 rounded-full bg-[#31c0d3]/20 dark:bg-[#0b545b]/30">
-                    <i class="fas fa-chalkboard-teacher text-xl text-[#31c0d3] dark:text-[#31c0d3] dark:bg-[#0b545b]/30 mr-2"></i>
+                <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#31c0d3]/20 dark:bg-[#0b545b]/30">
+                    <i class="fas fa-chalkboard-teacher text-xl text-[#31c0d3] dark:text-[#31c0d3]"></i>
                 </span>
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100">
                     {{ __('Profesores') }}
