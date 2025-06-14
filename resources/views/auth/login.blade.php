@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       <div class="mb-4">
         <label for="email" class="block text-sm font-medium text-[#008D99]">
-Correo
+{{__("Correo")}}
         </label>
         <input
           id="email"
@@ -246,7 +246,7 @@ Correo
 
       <div class="mb-4">
         <label for="password" class="block text-sm font-medium text-[#008D99]">
-Contraseña
+{{__("Contraseña")}}
         </label>
         <input
           id="password"
@@ -271,7 +271,7 @@ Contraseña
           class="h-4 w-4 text-[#008D99] border-gray-300 rounded focus:ring-[#008D99]"
         />
         <label for="remember_me" class="ml-2 text-sm text-[#008D99]">
-          Remember me
+            {{__("Recuerda este dispositivo")}}
         </label>
       </div>
 
@@ -282,14 +282,14 @@ Contraseña
           class="px-4 py-2 bg-[#008D99] hover:bg-[#007d89] text-white rounded-md
                  focus:outline-none focus:ring focus:ring-[#008D99] focus:ring-opacity-50"
         >
-          Log in
+{{__("Inicia Sesión")}}
         </button>
         @if (Route::has('password.request'))
           <a
             href="{{ route('password.request') }}"
             class="text-sm text-[#008D99] underline hover:text-[#006f77]"
           >
-            Forgot your password?
+                            {{__("Olvidaste tu contraseña?")}}
           </a>
         @endif
       </div>

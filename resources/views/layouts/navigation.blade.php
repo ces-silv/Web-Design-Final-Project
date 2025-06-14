@@ -15,6 +15,9 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('classes.index')}}" :active="request()->routeIs('classes.*')">
+                        {{ __('Clases') }}
+                    </x-nav-link>
                     <x-nav-link href="{{ route('professors.index')}}" :active="request()->routeIs('professors.*')">
                         {{ __('Profesores') }}
                     </x-nav-link>
@@ -80,7 +83,7 @@
             <x-responsive-nav-link href="{{ route('about') }}" :active="request()->routeIs('about')">
                 <i class="fas fa-info-circle mr-1"></i>
                 {{ __('Acerca de') }}
-            </x-responsive-nav-link>            
+            </x-responsive-nav-link>
         </div>
 
         <!-- Responsive Settings Options -->
