@@ -15,6 +15,6 @@ class ClassDay extends Model
     ];
 
     public function group() : BelongsTo {
-        return $this->belongsTo(ClassGroup::class);
+        return $this->belongsTo(ClassGroup::class, 'group_id');
     }
 }

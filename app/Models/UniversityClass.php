@@ -21,6 +21,6 @@ class UniversityClass extends Model
     }
 
     public function groups() : HasMany {
-        return $this->hasMany(ClassGroup::class);
+        return $this->hasMany(ClassGroup::class, 'class_id');
     }
 }

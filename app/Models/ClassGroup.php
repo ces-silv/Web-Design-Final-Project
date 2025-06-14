@@ -19,7 +19,7 @@ class ClassGroup extends Model
     }
 
     public function days() : HasMany {
-        return $this->belongsTo(ClassDay::class);
+        return $this->hasMany(ClassDay::class, 'group_id');
     }
 
     public function professor() : BelongsTo {

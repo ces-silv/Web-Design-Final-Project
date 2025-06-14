@@ -1,23 +1,22 @@
 <?php
 
 namespace Database\Seeders;
-
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        DB::table('faculties')->insert([
+            ['name' => 'Facultad de Ciencias Administrativas y Económicas'],
+            ['name' => 'Ciencias Jurídicas, Humanidades y Relaciones Internacionales'],
+            ['name' => 'Ciencias Médicas'],
+            ['name' => 'Ingeniería y Arquitectura'],
+            ['name' => 'Marketing, Diseño y Ciencias de la Comunicación'],
+            ['name' => 'Odontología'],
         ]);
+
     }
 }
