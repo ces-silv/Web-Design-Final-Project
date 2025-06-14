@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Professor extends Model
 {
@@ -17,7 +18,7 @@ class Professor extends Model
         'password',
     ];
 
-    /** 
+    /**
      * Mutator para encriptar la contraseña antes de guardarla en la base de datos.
     */
     public function setPasswordAttribute($value)
@@ -27,5 +28,9 @@ class Professor extends Model
 
     public function getFullName(){
         return $this->first_name . ' ' . $this->last_name;
+    }
+
+    public function groups() : HasMany{
+        return $this->hasMany(ClassGroup::class);
     }
 }
