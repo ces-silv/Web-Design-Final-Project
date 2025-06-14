@@ -223,8 +223,10 @@
                 </table>
             </div>
 
+
             {{-- Paginación --}}
             <div class="mt-6">
+                {{ $classes->links() }}
             </div>
         </div>
     </div>
