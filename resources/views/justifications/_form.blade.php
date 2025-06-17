@@ -167,7 +167,13 @@ document.addEventListener('alpine:init', () => {
         endDate: @json(old('end_date', $justification->end_date ?? '')),
         university_class_id: @json(old('university_class_id', $justification->university_class_id ?? '')),
         weekday: null,
+<<<<<<< HEAD
         
+=======
+        selectedWeekday: '',
+        selectedWeekdays: [],
+
+>>>>>>> parent of 38d2976 (Show the classes from a date range)
         // Estado
         availableClasses: @json($classes),
         isLoading: false,
@@ -194,6 +200,7 @@ document.addEventListener('alpine:init', () => {
         },
         
         updateWeekday() {
+<<<<<<< HEAD
             if (!this.startDate) return;
             
             // Usamos el día de la semana de la fecha de inicio
@@ -204,6 +211,37 @@ document.addEventListener('alpine:init', () => {
             this.fetchAvailableClasses();
         },
         
+=======
+            this.selectedWeekdays = [];
+            if (!this.startDate || !this.endDate) return;
+
+            let current = this.parseDate(this.startDate);
+            const end = this.parseDate(this.endDate);
+
+            while (current <= end) {
+                const day = current.getDay();
+                if (!this.selectedWeekdays.includes(day)) {
+                    this.selectedWeekdays.push(day);
+                }
+                current.setDate(current.getDate() + 1);
+            }
+
+            this.weekday = this.selectedWeekdays.length ? this.selectedWeekdays[0] : null;
+            this.fetchAvailableClasses();
+        },
+        
+        fetchAvailableClasses(weekday) {
+    fetch('/available-classes?weekday=' + weekday)
+        .then(response => response.json())
+        .then(data => {
+            // Procesar las clases
+        })
+        .catch(error => {
+            // Manejar error
+        });
+},
+        
+>>>>>>> parent of 38d2976 (Show the classes from a date range)
         async fetchAvailableClasses() {
             if (this.weekday === null) {
                 this.availableClasses = [];
@@ -214,7 +252,11 @@ document.addEventListener('alpine:init', () => {
             this.error = null;
             
             try {
+<<<<<<< HEAD
                 const response = await fetch(`/justifications/available-classes?weekday=${this.weekday}`);
+=======
+                const response = await fetch('/available-classes?weekday=' + weekday);
+>>>>>>> parent of 38d2976 (Show the classes from a date range)
                 
                 if (!response.ok) {
                     throw new Error('Error al cargar las clases');
@@ -236,12 +278,20 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
+<<<<<<< HEAD
         getWeekdayNames(weekday) {
+=======
+        getWeekdayNames() {
+>>>>>>> parent of 38d2976 (Show the classes from a date range)
             const weekdays = [
                 'Domingo', 'Lunes', 'Martes', 'Miércoles', 
                 'Jueves', 'Viernes', 'Sábado'
             ];
+<<<<<<< HEAD
             return weekdays[weekday];
+=======
+            return this.selectedWeekdays.map(i => weekdays[i]).join(', ');
+>>>>>>> parent of 38d2976 (Show the classes from a date range)
         },
         
         async fetchClassDetails(classId) {
@@ -273,7 +323,33 @@ document.addEventListener('alpine:init', () => {
         clearDocumentPreview() {
             this.$refs.documentInput.value = '';
             this.documentPreview = null;
-        }
+        },
+        
+        fetchAvailableClasses(weekday) {
+            if (!weekday) return;
+            fetch('/available-classes?weekday=' + weekday)
+                .then(response => response.json())
+                .then(data => {
+                    const classSelect = document.getElementById('classSelect');
+                    classSelect.innerHTML = '<option value="">— Selecciona una clase —</option>';
+                    if (data.length > 0) {
+                        data.forEach(clase => {
+                            classSelect.innerHTML += `<option value="${clase.id}">${clase.nombre}</option>`;
+                        });
+                    } else {
+                        classSelect.innerHTML += '<option value="">No se encontraron clases para el día seleccionado.</option>';
+                    }
+                })
+                .catch(error => {
+                    const classSelect = document.getElementById('classSelect');
+                    classSelect.innerHTML = '<option value="">No se pudieron cargar las clases para el día seleccionado.</option>';
+                });
+        },
+        
+        parseDate(str) {
+    const [year, month, day] = str.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
     }));
 });
 </script>

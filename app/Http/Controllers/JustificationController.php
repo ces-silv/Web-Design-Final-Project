@@ -226,6 +226,7 @@ class JustificationController extends Controller
     public function getAvailableClasses(Request $request)
     {
         $validated = $request->validate([
+<<<<<<< HEAD
             'weekday' => 'required|integer|between:0,6'
         ]);
 
@@ -252,6 +253,26 @@ class JustificationController extends Controller
             ->filter(function ($class) {
                 return $class->groups->isNotEmpty();
             })
+=======
+            'weekdays' => 'required|array',
+            'weekdays.*' => 'integer|between:0,6'
+        ]);
+
+        $weekdays = collect($validated['weekdays'])->unique();
+
+        $classes = \App\Models\UniversityClass::with(['faculty', 'groups.days'])
+            ->get()
+            ->filter(function ($class) use ($weekdays) {
+                // Solo incluir clases que tengan al menos un grupo con algún día seleccionado
+                foreach ($class->groups as $group) {
+                    $groupDays = $group->days->pluck('weekday');
+                    if ($groupDays->intersect($weekdays)->isNotEmpty()) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+>>>>>>> parent of 38d2976 (Show the classes from a date range)
             ->values();
 
         // Para asegurar JSON plano y sin problemas de colección

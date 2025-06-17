@@ -23,6 +23,7 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::resource('classes', ClassController::class);
 <<<<<<< HEAD
 
+<<<<<<< HEAD
 
 =======
 >>>>>>> parent of 4a5c83a (Merge pull request #7 from ces-silv/feature/crud-justificacion)
@@ -36,6 +37,12 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
  
 =======
 >>>>>>> parent of 3ce20e3 (feat: Actualización de vistas de facultades)
+=======
+    Route::get('/justifications/available-classes', [JustificationController::class, 'getAvailableClasses'])
+    ->name('justifications.available-classes')
+    ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
+    Route::get('/available-classes', [ClassController::class, 'availableClasses']);
+>>>>>>> parent of 38d2976 (Show the classes from a date range)
 });
 
 
