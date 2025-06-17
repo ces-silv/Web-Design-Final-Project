@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('justifications', function (Blueprint $table) {
+        Schema::create('justification_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->text('reason');
-            $table->string('attachment')->nullable(); // Para guardar la ruta del archivo adjunto
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->foreignId('justification_id')->constrained()->cascadeOnDelete();
+            $table->string('file_path');
+            $table->string('file_name');
+            $table->string('mime_type');
+            $table->unsignedInteger('size');
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('justifications');
+        Schema::dropIfExists('justification_documents');
     }
 };

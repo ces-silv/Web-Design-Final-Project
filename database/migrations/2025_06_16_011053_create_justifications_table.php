@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('justifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->text('reason');
-            $table->string('attachment')->nullable(); // Para guardar la ruta del archivo adjunto
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->text('description');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->foreignId('university_class_id')->constrained('classes');
+            $table->foreignId('student_id')->constrained('users');
             $table->timestamps();
         });
     }

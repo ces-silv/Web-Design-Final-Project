@@ -2,8 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Justification;
 use Illuminate\Http\Request;
+use App\Models\Justification;
+use App\Models\UniversityClass;
+use App\Models\JustificationDocument;
+use App\Models\ClassGroup;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class JustificationController extends Controller
 {
@@ -12,19 +19,29 @@ class JustificationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Justification::with('user');
+        $query = Justification::with(['class.faculty', 'student', 'document'])
+            ->where('student_id', auth()->id())
+            ->when($request->filled('search'), function($q) use ($request) {
+                $q->where(function($query) use ($request) {
+                    $query->where('description', 'like', '%'.$request->search.'%')
+                          ->orWhereHas('class', function($q) use ($request) {
+                              $q->where('name', 'like', '%'.$request->search.'%');
+                          });
+                });
+            })
+            ->orderBy(
+                $request->get('sort_by', 'start_date'),
+                $request->get('sort_dir', 'desc')
+            )
+            ->paginate(
+                $request->get('per_page', 15)
+            )
+            ->withQueryString();
 
-        if ($search = $request->input('search')) {
-            $query->where('reason', 'like', "%{$search}%");
-        }
-
-        if ($status = $request->input('status')) {
-            $query->where('status', $status);
-        }
-
-        $justifications = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-
-        return view('justifications.index', compact('justifications'));
+        return view('justifications.index', [
+            'justifications' => $query,
+            'filters' => $request->all(),
+        ]);
     }
 
     /**
@@ -32,7 +49,8 @@ class JustificationController extends Controller
      */
     public function create()
     {
-        return view('justifications.create');
+        $classes = UniversityClass::with('faculty')->get();
+        return view('justifications.create', compact('classes'));
     }
 
     /**
@@ -41,25 +59,58 @@ class JustificationController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'reason'     => 'required|string',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-        ], [
-            'reason.required' => 'La justificación es obligatoria.',
-            'attachment.mimes' => 'El archivo debe ser una imagen o PDF.',
-            'attachment.max' => 'El archivo no debe superar los 2MB.',
+            'description' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'university_class_id' => [
+                'required',
+                'exists:classes,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $start = Carbon::parse($request->start_date);
+                    $end = Carbon::parse($request->end_date);
+
+                    $days = [];
+                    for ($date = $start; $date->lte($end); $date->addDay()) {
+                        $days[] = $date->dayOfWeek;
+                    }
+
+                    $hasValidDays = ClassGroup::where('class_id', $value)
+                        ->whereHas('days', function($q) use ($days) {
+                            $q->whereIn('weekday', array_unique($days));
+                        })->exists();
+
+                    if (!$hasValidDays) {
+                        $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
+                    }
+                }
+            ],
+            'document' => 'required|file|max:2048|mimes:pdf,jpg,png'
         ]);
 
-        $data['user_id'] = auth()->id();
-        if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('justifications', 'public');
-        }
+        DB::transaction(function () use ($data, $request) {
+            $justification = Justification::create([
+                'description' => $data['description'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+                'university_class_id' => $data['university_class_id'],
+                'student_id' => auth()->id()
+            ]);
 
-        Justification::create($data);
+            $file = $request->file('document');
+            $path = $file->store('justifications', 'public');
+
+            $justification->document()->create([
+                'file_path' => $path,
+                'file_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize()
+            ]);
+        });
 
         return redirect()->route('justifications.index')
             ->with('alert', [
-                'type'    => 'success',
-                'message' => 'Justificación enviada correctamente.'
+                'type' => 'success',
+                'message' => 'Justificación creada exitosamente.'
             ]);
     }
 
@@ -68,7 +119,13 @@ class JustificationController extends Controller
      */
     public function show(Justification $justification)
     {
-        return view('justifications.show', compact('justification'));
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return view('justifications.show', [
+            'justification' => $justification->load(['class.faculty', 'student', 'document'])
+        ]);
     }
 
     /**
@@ -76,7 +133,15 @@ class JustificationController extends Controller
      */
     public function edit(Justification $justification)
     {
-        return view('justifications.edit', compact('justification'));
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $classes = UniversityClass::with('faculty')->get();
+        return view('justifications.edit', [
+            'justification' => $justification,
+            'classes' => $classes
+        ]);
     }
 
     /**
@@ -84,29 +149,70 @@ class JustificationController extends Controller
      */
     public function update(Request $request, Justification $justification)
     {
-        $data = $request->validate([
-            'reason'     => 'required|string',
-            'status'     => 'required|in:pending,approved,rejected',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-        ], [
-            'reason.required' => 'La justificación es obligatoria.',
-            'status.required' => 'El estado es obligatorio.',
-            'attachment.mimes' => 'El archivo debe ser una imagen o PDF.',
-            'attachment.max' => 'El archivo no debe superar los 2MB.',
-        ]);
-
-        if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('justifications', 'public');
-        } else {
-            unset($data['attachment']);
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
         }
 
-        $justification->update($data);
+        $data = $request->validate([
+            'description' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'university_class_id' => [
+                'required',
+                'exists:classes,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $start = Carbon::parse($request->start_date);
+                    $end = Carbon::parse($request->end_date);
+
+                    $days = [];
+                    for ($date = $start; $date->lte($end); $date->addDay()) {
+                        $days[] = $date->dayOfWeek;
+                    }
+
+                    $hasValidDays = ClassGroup::where('class_id', $value)
+                        ->whereHas('days', function($q) use ($days) {
+                            $q->whereIn('weekday', array_unique($days));
+                        })->exists();
+
+                    if (!$hasValidDays) {
+                        $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
+                    }
+                }
+            ],
+            'document' => 'sometimes|file|max:2048|mimes:pdf,jpg,png'
+        ]);
+
+        DB::transaction(function () use ($data, $request, $justification) {
+            $justification->update([
+                'description' => $data['description'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+                'university_class_id' => $data['university_class_id']
+            ]);
+
+            if ($request->hasFile('document')) {
+                // Eliminar documento anterior si existe
+                if ($justification->document) {
+                    Storage::disk('public')->delete($justification->document->file_path);
+                    $justification->document()->delete();
+                }
+
+                $file = $request->file('document');
+                $path = $file->store('justifications', 'public');
+
+                $justification->document()->create([
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize()
+                ]);
+            }
+        });
 
         return redirect()->route('justifications.index')
             ->with('alert', [
-                'type'    => 'success',
-                'message' => 'Justificación actualizada correctamente.'
+                'type' => 'success',
+                'message' => 'Justificación actualizada exitosamente.'
             ]);
     }
 
@@ -115,11 +221,55 @@ class JustificationController extends Controller
      */
     public function destroy(Justification $justification)
     {
-        $justification->delete();
-        return redirect()->route('justifications.index')
-            ->with('alert', [
-                'type'    => 'success',
-                'message' => 'Justificación eliminada correctamente.'
-            ]);
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+
+        DB::transaction(function () use ($justification) {
+            if ($justification->document) {
+                Storage::disk('public')->delete($justification->document->file_path);
+                $justification->document()->delete();
+            }
+
+            $justification->delete();
+        });
+
+        return response()->json(null, 204);
+    }
+
+    /**
+     * Obtiene las clases disponibles para un día específico de la semana
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAvailableClasses(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        // Calcula los días de la semana del rango
+        $start = new \DateTime($validated['start_date']);
+        $end = new \DateTime($validated['end_date']);
+        $weekdays = [];
+        while ($start <= $end) {
+            $dow = (int)$start->format('w'); // 0=domingo, 6=sábado
+            if (!in_array($dow, $weekdays)) {
+                $weekdays[] = $dow;
+            }
+            $start->modify('+1 day');
+        }
+        sort($weekdays);
+
+        // Trae clases que tengan al menos un grupo con algún día en el rango seleccionado
+        $classes = \App\Models\UniversityClass::with(['faculty', 'groups.days'])
+            ->whereHas('groups.days', function ($q) use ($weekdays) {
+                $q->whereIn('weekday', $weekdays);
+            })
+            ->get();
+
+        return response()->json($classes->toArray());
     }
 }
