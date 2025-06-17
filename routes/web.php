@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfessorController;
 use App\Http\Controllers\ClassController;
+use App\Http\Controllers\FacultyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,6 +24,7 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::resource('classes', ClassController::class);
     Route::view('/about', 'pages.about')
     ->name('about');
+    Route::resource('faculties', FacultyController::class);
 });
 
 require __DIR__.'/auth.php';
