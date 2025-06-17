@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfessorController;
 use App\Http\Controllers\ClassController;
+use App\Http\Controllers\FacultyController;
 use App\Http\Controllers\JustificationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JustificationController;
@@ -32,6 +33,7 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::resource('justifications', JustificationController::class);
     Route::view('/about', 'pages.about')
     ->name('about');
+    Route::resource('faculties', FacultyController::class);
     Route::post('/available-classes', [\App\Http\Controllers\JustificationController::class, 'getAvailableClasses']);
 });
 
