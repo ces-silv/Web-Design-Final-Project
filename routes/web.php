@@ -28,6 +28,7 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::get('/justifications/available-classes', [JustificationController::class, 'getAvailableClasses'])
     ->name('justifications.available-classes')
     ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
+    Route::get('/available-classes', [ClassController::class, 'availableClasses']);
 });
 
 require __DIR__.'/auth.php';

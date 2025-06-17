@@ -167,6 +167,7 @@ document.addEventListener('alpine:init', () => {
         endDate: @json(old('end_date', $justification->end_date ?? '')),
         university_class_id: @json(old('university_class_id', $justification->university_class_id ?? '')),
         weekday: null,
+        selectedWeekday: '',
         
         // Estado
         availableClasses: @json($classes),
@@ -204,6 +205,17 @@ document.addEventListener('alpine:init', () => {
             this.fetchAvailableClasses();
         },
         
+        fetchAvailableClasses(weekday) {
+    fetch('/available-classes?weekday=' + weekday)
+        .then(response => response.json())
+        .then(data => {
+            // Procesar las clases
+        })
+        .catch(error => {
+            // Manejar error
+        });
+},
+        
         async fetchAvailableClasses() {
             if (this.weekday === null) {
                 this.availableClasses = [];
@@ -214,7 +226,7 @@ document.addEventListener('alpine:init', () => {
             this.error = null;
             
             try {
-                const response = await fetch(`/justifications/available-classes?weekday=${this.weekday}`);
+                const response = await fetch('/available-classes?weekday=' + weekday);
                 
                 if (!response.ok) {
                     throw new Error('Error al cargar las clases');
@@ -273,6 +285,27 @@ document.addEventListener('alpine:init', () => {
         clearDocumentPreview() {
             this.$refs.documentInput.value = '';
             this.documentPreview = null;
+        },
+        
+        fetchAvailableClasses(weekday) {
+            if (!weekday) return;
+            fetch('/available-classes?weekday=' + weekday)
+                .then(response => response.json())
+                .then(data => {
+                    const classSelect = document.getElementById('classSelect');
+                    classSelect.innerHTML = '<option value="">— Selecciona una clase —</option>';
+                    if (data.length > 0) {
+                        data.forEach(clase => {
+                            classSelect.innerHTML += `<option value="${clase.id}">${clase.nombre}</option>`;
+                        });
+                    } else {
+                        classSelect.innerHTML += '<option value="">No se encontraron clases para el día seleccionado.</option>';
+                    }
+                })
+                .catch(error => {
+                    const classSelect = document.getElementById('classSelect');
+                    classSelect.innerHTML = '<option value="">No se pudieron cargar las clases para el día seleccionado.</option>';
+                });
         }
     }));
 });
