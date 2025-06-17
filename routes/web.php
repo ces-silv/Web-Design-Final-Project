@@ -41,8 +41,11 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::get('/justifications/available-classes', [JustificationController::class, 'getAvailableClasses'])
     ->name('justifications.available-classes')
     ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
+<<<<<<< HEAD
     Route::get('/available-classes', [ClassController::class, 'availableClasses']);
 >>>>>>> parent of 38d2976 (Show the classes from a date range)
+=======
+>>>>>>> parent of 0e18f9b (Conection between the class schedule and the absence schedule)
 });
 
 
