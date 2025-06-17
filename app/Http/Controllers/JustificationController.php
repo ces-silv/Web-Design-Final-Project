@@ -246,25 +246,29 @@ class JustificationController extends Controller
     public function getAvailableClasses(Request $request)
     {
         $validated = $request->validate([
-            'weekdays' => 'required|array',
-            'weekdays.*' => 'integer|between:0,6'
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        $weekdays = collect($validated['weekdays'])->unique();
+        // Calcula los días de la semana del rango
+        $start = new \DateTime($validated['start_date']);
+        $end = new \DateTime($validated['end_date']);
+        $weekdays = [];
+        while ($start <= $end) {
+            $dow = (int)$start->format('w'); // 0=domingo, 6=sábado
+            if (!in_array($dow, $weekdays)) {
+                $weekdays[] = $dow;
+            }
+            $start->modify('+1 day');
+        }
+        sort($weekdays);
 
+        // Trae clases que tengan al menos un grupo con algún día en el rango seleccionado
         $classes = \App\Models\UniversityClass::with(['faculty', 'groups.days'])
-            ->get()
-            ->filter(function ($class) use ($weekdays) {
-                // Solo incluir clases que tengan al menos un grupo con algún día seleccionado
-                foreach ($class->groups as $group) {
-                    $groupDays = $group->days->pluck('weekday');
-                    if ($groupDays->intersect($weekdays)->isNotEmpty()) {
-                        return true;
-                    }
-                }
-                return false;
+            ->whereHas('groups.days', function ($q) use ($weekdays) {
+                $q->whereIn('weekday', $weekdays);
             })
-            ->values();
+            ->get();
 
         return response()->json($classes->toArray());
     }

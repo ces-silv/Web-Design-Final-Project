@@ -11,6 +11,7 @@
     <div class="min-h-screen py-12 bg-white/10 dark:bg-gray-900 transition-colors">
         <div class="max-w-lg mx-auto bg-white/80 dark:bg-gray-800/80 border border-[#0b545b]/20 dark:border-gray-700 shadow-lg p-8 rounded-2xl">
             @include('justifications._form')
+            
         </div>
     </div>
 </x-app-layout>
