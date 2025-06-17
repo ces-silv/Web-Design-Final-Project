@@ -246,35 +246,26 @@ class JustificationController extends Controller
     public function getAvailableClasses(Request $request)
     {
         $validated = $request->validate([
-            'weekday' => 'required|integer|between:0,6'
+            'weekdays' => 'required|array',
+            'weekdays.*' => 'integer|between:0,6'
         ]);
 
-        $weekday = $validated['weekday'];
+        $weekdays = collect($validated['weekdays'])->unique();
 
-        $classes = UniversityClass::query()
-            ->with([
-                'faculty',
-                'groups.days'
-            ])
-            ->whereHas('groups.days', function($query) use ($weekday) {
-                $query->where('weekday', $weekday);
-            })
+        $classes = \App\Models\UniversityClass::with(['faculty', 'groups.days'])
             ->get()
-            ->map(function ($class) use ($weekday) {
-                $class->setRelation('groups', $class->groups->filter(function ($group) use ($weekday) {
-                    $group->setRelation('days', $group->days->filter(function ($day) use ($weekday) {
-                        return $day->weekday == $weekday;
-                    }));
-                    return $group->days->where('weekday', $weekday)->isNotEmpty();
-                })->values());
-                return $class;
-            })
-            ->filter(function ($class) {
-                return $class->groups->isNotEmpty();
+            ->filter(function ($class) use ($weekdays) {
+                // Solo incluir clases que tengan al menos un grupo con algún día seleccionado
+                foreach ($class->groups as $group) {
+                    $groupDays = $group->days->pluck('weekday');
+                    if ($groupDays->intersect($weekdays)->isNotEmpty()) {
+                        return true;
+                    }
+                }
+                return false;
             })
             ->values();
 
-        // Para asegurar JSON plano y sin problemas de colección
         return response()->json($classes->toArray());
     }
 }
