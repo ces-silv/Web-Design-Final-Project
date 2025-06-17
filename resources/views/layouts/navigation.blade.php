@@ -24,6 +24,9 @@
                     <x-nav-link href="{{ route('professors.index')}}" :active="request()->routeIs('professors.*')">
                         {{ __('Profesores') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('justifications.index')}}" :active="request()->routeIs('justifications.*')">
+                        {{ __('Justificaciones') }}
+                    </x-nav-link>
                     <x-nav-link href="{{ route('about') }}" :active="request()->routeIs('about')">
                         <i class="fa-solid fa-circle-info mr-2"></i>
                         {{ __('Acerca de') }}
