@@ -28,11 +28,14 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
 >>>>>>> parent of 4a5c83a (Merge pull request #7 from ces-silv/feature/crud-justificacion)
     Route::view('/about', 'pages.about')
     ->name('about');
+<<<<<<< HEAD
 
     Route::view('/about', 'pages.about')->name('about');
 
 
  
+=======
+>>>>>>> parent of 3ce20e3 (feat: Actualización de vistas de facultades)
 });
 
 
