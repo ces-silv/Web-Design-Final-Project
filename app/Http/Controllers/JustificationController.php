@@ -41,12 +41,41 @@ class JustificationController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+<<<<<<< HEAD
             'reason'     => 'required|string',
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ], [
             'reason.required' => 'La justificación es obligatoria.',
             'attachment.mimes' => 'El archivo debe ser una imagen o PDF.',
             'attachment.max' => 'El archivo no debe superar los 2MB.',
+=======
+            'description' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'university_class_id' => [
+                'required',
+                'exists:classes,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $start = Carbon::parse($request->start_date);
+                    $end = Carbon::parse($request->end_date);
+                    
+                    $days = [];
+                    for ($date = $start; $date->lte($end); $date->addDay()) {
+                        $days[] = $date->dayOfWeek;
+                    }
+                    
+                    $hasValidDays = ClassGroup::where('class_id', $value)
+                        ->whereHas('days', function($q) use ($days) {
+                            $q->whereIn('weekday', array_unique($days));
+                        })->exists();
+                    
+                    if (!$hasValidDays) {
+                        $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
+                    }
+                }
+            ],
+            'document' => 'required|file|max:2048|mimes:pdf,jpg,png'
+>>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
         ]);
 
         $data['user_id'] = auth()->id();
@@ -68,7 +97,17 @@ class JustificationController extends Controller
      */
     public function show(Justification $justification)
     {
+<<<<<<< HEAD
         return view('justifications.show', compact('justification'));
+=======
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        return view('justifications.show', [
+            'justification' => $justification->load(['class.faculty', 'student', 'document'])
+        ]);
+>>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
     }
 
     /**
@@ -76,7 +115,19 @@ class JustificationController extends Controller
      */
     public function edit(Justification $justification)
     {
+<<<<<<< HEAD
         return view('justifications.edit', compact('justification'));
+=======
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        $classes = UniversityClass::with('faculty')->get();
+        return view('justifications.edit', [
+            'justification' => $justification,
+            'classes' => $classes
+        ]);
+>>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
     }
 
     /**
@@ -84,6 +135,7 @@ class JustificationController extends Controller
      */
     public function update(Request $request, Justification $justification)
     {
+<<<<<<< HEAD
         $data = $request->validate([
             'reason'     => 'required|string',
             'status'     => 'required|in:pending,approved,rejected',
@@ -93,6 +145,39 @@ class JustificationController extends Controller
             'status.required' => 'El estado es obligatorio.',
             'attachment.mimes' => 'El archivo debe ser una imagen o PDF.',
             'attachment.max' => 'El archivo no debe superar los 2MB.',
+=======
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        $data = $request->validate([
+            'description' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'university_class_id' => [
+                'required',
+                'exists:classes,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $start = Carbon::parse($request->start_date);
+                    $end = Carbon::parse($request->end_date);
+                    
+                    $days = [];
+                    for ($date = $start; $date->lte($end); $date->addDay()) {
+                        $days[] = $date->dayOfWeek;
+                    }
+                    
+                    $hasValidDays = ClassGroup::where('class_id', $value)
+                        ->whereHas('days', function($q) use ($days) {
+                            $q->whereIn('weekday', array_unique($days));
+                        })->exists();
+                    
+                    if (!$hasValidDays) {
+                        $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
+                    }
+                }
+            ],
+            'document' => 'sometimes|file|max:2048|mimes:pdf,jpg,png'
+>>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
         ]);
 
         if ($request->hasFile('attachment')) {
@@ -119,13 +204,13 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-
+        
         DB::transaction(function () use ($justification) {
             if ($justification->document) {
                 Storage::disk('public')->delete($justification->document->file_path);
                 $justification->document()->delete();
             }
-
+            
             $justification->delete();
         });
 
@@ -134,7 +219,7 @@ class JustificationController extends Controller
 
     /**
      * Obtiene las clases disponibles para un día específico de la semana
-     *
+     * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -171,5 +256,10 @@ class JustificationController extends Controller
 
         // Para asegurar JSON plano y sin problemas de colección
         return response()->json($classes->toArray());
+<<<<<<< HEAD
    }
 }
+=======
+    }
+}
+>>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)

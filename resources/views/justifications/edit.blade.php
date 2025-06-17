@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {{-- filepath: resources/views/justifications/edit.blade.php --}}
 @extends('layouts.app')
 
@@ -33,3 +34,20 @@
     </form>
 </div>
 @endsection
+=======
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-file-circle-check text-2xl text-[#31c0d3] dark:text-[#31c0d3] mr-2"></i>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100">
+                {{ __('Editar Justificación') }}
+            </h2>
+        </div>
+    </x-slot>
+    <div class="min-h-screen py-12 bg-white/10 dark:bg-gray-900 transition-colors">
+        <div class="max-w-lg mx-auto bg-white/80 dark:bg-gray-800/80 border border-[#0b545b]/20 dark:border-gray-700 shadow-lg p-8 rounded-2xl">
+            @include('justifications._form', ['justification' => $justification])
+        </div>
+    </div>
+</x-app-layout>
+>>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
