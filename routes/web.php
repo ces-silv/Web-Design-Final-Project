@@ -21,8 +21,11 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('professors', ProfessorController::class);
     Route::resource('classes', ClassController::class);
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> parent of 4a5c83a (Merge pull request #7 from ces-silv/feature/crud-justificacion)
     Route::view('/about', 'pages.about')
     ->name('about');
 
