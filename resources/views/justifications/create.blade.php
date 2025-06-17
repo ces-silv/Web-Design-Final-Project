@@ -1,3 +1,4 @@
+
 {{-- filepath: resources/views/justifications/create.blade.php --}}
 @extends('layouts.app')
 

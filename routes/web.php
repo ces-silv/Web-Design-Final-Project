@@ -26,6 +26,11 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
 
     Route::view('/about', 'pages.about')
     ->name('about');
+
+    Route::view('/about', 'pages.about')->name('about');
+
+
+ 
 });
 
 

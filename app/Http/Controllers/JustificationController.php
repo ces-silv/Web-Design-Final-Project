@@ -115,11 +115,61 @@ class JustificationController extends Controller
      */
     public function destroy(Justification $justification)
     {
-        $justification->delete();
-        return redirect()->route('justifications.index')
-            ->with('alert', [
-                'type'    => 'success',
-                'message' => 'Justificación eliminada correctamente.'
-            ]);
+
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+
+        DB::transaction(function () use ($justification) {
+            if ($justification->document) {
+                Storage::disk('public')->delete($justification->document->file_path);
+                $justification->document()->delete();
+            }
+
+            $justification->delete();
+        });
+
+        return response()->json(null, 204);
     }
+
+    /**
+     * Obtiene las clases disponibles para un día específico de la semana
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAvailableClasses(Request $request)
+    {
+        $validated = $request->validate([
+            'weekday' => 'required|integer|between:0,6'
+        ]);
+
+        $weekday = $validated['weekday'];
+
+        $classes = UniversityClass::query()
+            ->with([
+                'faculty',
+                'groups.days'
+            ])
+            ->whereHas('groups.days', function($query) use ($weekday) {
+                $query->where('weekday', $weekday);
+            })
+            ->get()
+            ->map(function ($class) use ($weekday) {
+                $class->setRelation('groups', $class->groups->filter(function ($group) use ($weekday) {
+                    $group->setRelation('days', $group->days->filter(function ($day) use ($weekday) {
+                        return $day->weekday == $weekday;
+                    }));
+                    return $group->days->where('weekday', $weekday)->isNotEmpty();
+                })->values());
+                return $class;
+            })
+            ->filter(function ($class) {
+                return $class->groups->isNotEmpty();
+            })
+            ->values();
+
+        // Para asegurar JSON plano y sin problemas de colección
+        return response()->json($classes->toArray());
+   }
 }
