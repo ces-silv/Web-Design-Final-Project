@@ -23,11 +23,9 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('professors', ProfessorController::class);
     Route::resource('classes', ClassController::class);
+
     Route::view('/about', 'pages.about')
     ->name('about');
-
-    Route::post('/available-classes', [\App\Http\Controllers\JustificationController::class, 'getAvailableClasses']);
-    Route::resource('faculties', FacultyController::class);
 });
 
 
