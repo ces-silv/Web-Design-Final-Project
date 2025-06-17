@@ -22,6 +22,7 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::resource('professors', ProfessorController::class);
     Route::resource('classes', ClassController::class);
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 
@@ -46,6 +47,10 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
 >>>>>>> parent of 38d2976 (Show the classes from a date range)
 =======
 >>>>>>> parent of 0e18f9b (Conection between the class schedule and the absence schedule)
+=======
+    Route::view('/about', 'pages.about')
+    ->name('about');
+>>>>>>> parent of dec530a (feature/justifications)
 });
 
 
