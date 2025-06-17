@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+<<<<<<< HEAD
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\JustificationDocument;
@@ -35,3 +36,23 @@ class Justification extends Model
         return $this->hasOne(JustificationDocument::class);
     }
 }
+=======
+
+class Justification extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'reason',
+        'attachment',
+        'status',
+    ];
+
+    // Relación con el usuario
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+}
+>>>>>>> 4a5c83abbc457871d86aac795b8f438d51554525
