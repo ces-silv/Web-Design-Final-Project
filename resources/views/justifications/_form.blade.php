@@ -171,9 +171,13 @@ document.addEventListener('alpine:init', () => {
         
 =======
         selectedWeekday: '',
+<<<<<<< HEAD
         selectedWeekdays: [],
 
 >>>>>>> parent of 38d2976 (Show the classes from a date range)
+=======
+        
+>>>>>>> parent of 5a56ee9 (Days selection has been corrected)
         // Estado
         availableClasses: @json($classes),
         isLoading: false,
@@ -201,6 +205,9 @@ document.addEventListener('alpine:init', () => {
         
         updateWeekday() {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of 5a56ee9 (Days selection has been corrected)
             if (!this.startDate) return;
             
             // Usamos el día de la semana de la fecha de inicio
@@ -208,6 +215,7 @@ document.addEventListener('alpine:init', () => {
             this.weekday = date.getDay(); // 0=Domingo, 1=Lunes, etc.
             
             // Cargar las clases para este día
+<<<<<<< HEAD
             this.fetchAvailableClasses();
         },
         
@@ -227,6 +235,8 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.weekday = this.selectedWeekdays.length ? this.selectedWeekdays[0] : null;
+=======
+>>>>>>> parent of 5a56ee9 (Days selection has been corrected)
             this.fetchAvailableClasses();
         },
         
@@ -279,19 +289,27 @@ document.addEventListener('alpine:init', () => {
         },
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         getWeekdayNames(weekday) {
 =======
         getWeekdayNames() {
 >>>>>>> parent of 38d2976 (Show the classes from a date range)
+=======
+        getWeekdayNames(weekday) {
+>>>>>>> parent of 5a56ee9 (Days selection has been corrected)
             const weekdays = [
                 'Domingo', 'Lunes', 'Martes', 'Miércoles', 
                 'Jueves', 'Viernes', 'Sábado'
             ];
 <<<<<<< HEAD
+<<<<<<< HEAD
             return weekdays[weekday];
 =======
             return this.selectedWeekdays.map(i => weekdays[i]).join(', ');
 >>>>>>> parent of 38d2976 (Show the classes from a date range)
+=======
+            return weekdays[weekday];
+>>>>>>> parent of 5a56ee9 (Days selection has been corrected)
         },
         
         async fetchClassDetails(classId) {
@@ -344,12 +362,7 @@ document.addEventListener('alpine:init', () => {
                     const classSelect = document.getElementById('classSelect');
                     classSelect.innerHTML = '<option value="">No se pudieron cargar las clases para el día seleccionado.</option>';
                 });
-        },
-        
-        parseDate(str) {
-    const [year, month, day] = str.split('-').map(Number);
-    return new Date(year, month - 1, day);
-}
+        }
     }));
 });
 </script>
