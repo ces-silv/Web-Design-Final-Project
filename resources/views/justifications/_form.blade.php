@@ -167,20 +167,7 @@ document.addEventListener('alpine:init', () => {
         endDate: @json(old('end_date', $justification->end_date ?? '')),
         university_class_id: @json(old('university_class_id', $justification->university_class_id ?? '')),
         weekday: null,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> parent of 0e18f9b (Conection between the class schedule and the absence schedule)
         
-=======
-        selectedWeekday: '',
-<<<<<<< HEAD
-        selectedWeekdays: [],
-
->>>>>>> parent of 38d2976 (Show the classes from a date range)
-=======
-        
->>>>>>> parent of 5a56ee9 (Days selection has been corrected)
         // Estado
         availableClasses: @json($classes),
         isLoading: false,
@@ -207,10 +194,6 @@ document.addEventListener('alpine:init', () => {
         },
         
         updateWeekday() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> parent of 5a56ee9 (Days selection has been corrected)
             if (!this.startDate) return;
             
             // Usamos el día de la semana de la fecha de inicio
@@ -218,46 +201,9 @@ document.addEventListener('alpine:init', () => {
             this.weekday = date.getDay(); // 0=Domingo, 1=Lunes, etc.
             
             // Cargar las clases para este día
-<<<<<<< HEAD
             this.fetchAvailableClasses();
         },
         
-=======
-            this.selectedWeekdays = [];
-            if (!this.startDate || !this.endDate) return;
-
-            let current = this.parseDate(this.startDate);
-            const end = this.parseDate(this.endDate);
-
-            while (current <= end) {
-                const day = current.getDay();
-                if (!this.selectedWeekdays.includes(day)) {
-                    this.selectedWeekdays.push(day);
-                }
-                current.setDate(current.getDate() + 1);
-            }
-
-            this.weekday = this.selectedWeekdays.length ? this.selectedWeekdays[0] : null;
-=======
->>>>>>> parent of 5a56ee9 (Days selection has been corrected)
-            this.fetchAvailableClasses();
-        },
-        
-<<<<<<< HEAD
-        fetchAvailableClasses(weekday) {
-    fetch('/available-classes?weekday=' + weekday)
-        .then(response => response.json())
-        .then(data => {
-            // Procesar las clases
-        })
-        .catch(error => {
-            // Manejar error
-        });
-},
-        
->>>>>>> parent of 38d2976 (Show the classes from a date range)
-=======
->>>>>>> parent of 0e18f9b (Conection between the class schedule and the absence schedule)
         async fetchAvailableClasses() {
             if (this.weekday === null) {
                 this.availableClasses = [];
@@ -268,15 +214,7 @@ document.addEventListener('alpine:init', () => {
             this.error = null;
             
             try {
-<<<<<<< HEAD
-<<<<<<< HEAD
                 const response = await fetch(`/justifications/available-classes?weekday=${this.weekday}`);
-=======
-                const response = await fetch('/available-classes?weekday=' + weekday);
->>>>>>> parent of 38d2976 (Show the classes from a date range)
-=======
-                const response = await fetch(`/justifications/available-classes?weekday=${this.weekday}`);
->>>>>>> parent of 0e18f9b (Conection between the class schedule and the absence schedule)
                 
                 if (!response.ok) {
                     throw new Error('Error al cargar las clases');
@@ -298,28 +236,12 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
-<<<<<<< HEAD
-<<<<<<< HEAD
         getWeekdayNames(weekday) {
-=======
-        getWeekdayNames() {
->>>>>>> parent of 38d2976 (Show the classes from a date range)
-=======
-        getWeekdayNames(weekday) {
->>>>>>> parent of 5a56ee9 (Days selection has been corrected)
             const weekdays = [
                 'Domingo', 'Lunes', 'Martes', 'Miércoles', 
                 'Jueves', 'Viernes', 'Sábado'
             ];
-<<<<<<< HEAD
-<<<<<<< HEAD
             return weekdays[weekday];
-=======
-            return this.selectedWeekdays.map(i => weekdays[i]).join(', ');
->>>>>>> parent of 38d2976 (Show the classes from a date range)
-=======
-            return weekdays[weekday];
->>>>>>> parent of 5a56ee9 (Days selection has been corrected)
         },
         
         async fetchClassDetails(classId) {

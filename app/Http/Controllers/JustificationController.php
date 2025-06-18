@@ -2,8 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Justification;
 use Illuminate\Http\Request;
+use App\Models\Justification;
+use App\Models\UniversityClass;
+use App\Models\JustificationDocument;
+use App\Models\ClassGroup;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class JustificationController extends Controller
 {
@@ -12,19 +19,29 @@ class JustificationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Justification::with('user');
+        $query = Justification::with(['class.faculty', 'student', 'document'])
+            ->where('student_id', auth()->id())
+            ->when($request->filled('search'), function($q) use ($request) {
+                $q->where(function($query) use ($request) {
+                    $query->where('description', 'like', '%'.$request->search.'%')
+                          ->orWhereHas('class', function($q) use ($request) {
+                              $q->where('name', 'like', '%'.$request->search.'%');
+                          });
+                });
+            })
+            ->orderBy(
+                $request->get('sort_by', 'start_date'),
+                $request->get('sort_dir', 'desc')
+            )
+            ->paginate(
+                $request->get('per_page', 15)
+            )
+            ->withQueryString();
 
-        if ($search = $request->input('search')) {
-            $query->where('reason', 'like', "%{$search}%");
-        }
-
-        if ($status = $request->input('status')) {
-            $query->where('status', $status);
-        }
-
-        $justifications = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-
-        return view('justifications.index', compact('justifications'));
+        return view('justifications.index', [
+            'justifications' => $query,
+            'filters' => $request->all(),
+        ]);
     }
 
     /**
@@ -32,7 +49,8 @@ class JustificationController extends Controller
      */
     public function create()
     {
-        return view('justifications.create');
+        $classes = UniversityClass::with('faculty')->get();
+        return view('justifications.create', compact('classes'));
     }
 
     /**
@@ -41,14 +59,6 @@ class JustificationController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-<<<<<<< HEAD
-            'reason'     => 'required|string',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-        ], [
-            'reason.required' => 'La justificación es obligatoria.',
-            'attachment.mimes' => 'El archivo debe ser una imagen o PDF.',
-            'attachment.max' => 'El archivo no debe superar los 2MB.',
-=======
             'description' => 'required|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -75,20 +85,32 @@ class JustificationController extends Controller
                 }
             ],
             'document' => 'required|file|max:2048|mimes:pdf,jpg,png'
->>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
         ]);
 
-        $data['user_id'] = auth()->id();
-        if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('justifications', 'public');
-        }
+        DB::transaction(function () use ($data, $request) {
+            $justification = Justification::create([
+                'description' => $data['description'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+                'university_class_id' => $data['university_class_id'],
+                'student_id' => auth()->id()
+            ]);
 
-        Justification::create($data);
+            $file = $request->file('document');
+            $path = $file->store('justifications', 'public');
+
+            $justification->document()->create([
+                'file_path' => $path,
+                'file_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize()
+            ]);
+        });
 
         return redirect()->route('justifications.index')
             ->with('alert', [
-                'type'    => 'success',
-                'message' => 'Justificación enviada correctamente.'
+                'type' => 'success',
+                'message' => 'Justificación creada exitosamente.'
             ]);
     }
 
@@ -97,9 +119,6 @@ class JustificationController extends Controller
      */
     public function show(Justification $justification)
     {
-<<<<<<< HEAD
-        return view('justifications.show', compact('justification'));
-=======
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
@@ -107,7 +126,6 @@ class JustificationController extends Controller
         return view('justifications.show', [
             'justification' => $justification->load(['class.faculty', 'student', 'document'])
         ]);
->>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
     }
 
     /**
@@ -115,9 +133,6 @@ class JustificationController extends Controller
      */
     public function edit(Justification $justification)
     {
-<<<<<<< HEAD
-        return view('justifications.edit', compact('justification'));
-=======
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
@@ -127,7 +142,6 @@ class JustificationController extends Controller
             'justification' => $justification,
             'classes' => $classes
         ]);
->>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
     }
 
     /**
@@ -135,17 +149,6 @@ class JustificationController extends Controller
      */
     public function update(Request $request, Justification $justification)
     {
-<<<<<<< HEAD
-        $data = $request->validate([
-            'reason'     => 'required|string',
-            'status'     => 'required|in:pending,approved,rejected',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-        ], [
-            'reason.required' => 'La justificación es obligatoria.',
-            'status.required' => 'El estado es obligatorio.',
-            'attachment.mimes' => 'El archivo debe ser una imagen o PDF.',
-            'attachment.max' => 'El archivo no debe superar los 2MB.',
-=======
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
@@ -177,21 +180,39 @@ class JustificationController extends Controller
                 }
             ],
             'document' => 'sometimes|file|max:2048|mimes:pdf,jpg,png'
->>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
         ]);
 
-        if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('justifications', 'public');
-        } else {
-            unset($data['attachment']);
-        }
+        DB::transaction(function () use ($data, $request, $justification) {
+            $justification->update([
+                'description' => $data['description'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+                'university_class_id' => $data['university_class_id']
+            ]);
 
-        $justification->update($data);
+            if ($request->hasFile('document')) {
+                // Eliminar documento anterior si existe
+                if ($justification->document) {
+                    Storage::disk('public')->delete($justification->document->file_path);
+                    $justification->document()->delete();
+                }
+
+                $file = $request->file('document');
+                $path = $file->store('justifications', 'public');
+
+                $justification->document()->create([
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize()
+                ]);
+            }
+        });
 
         return redirect()->route('justifications.index')
             ->with('alert', [
-                'type'    => 'success',
-                'message' => 'Justificación actualizada correctamente.'
+                'type' => 'success',
+                'message' => 'Justificación actualizada exitosamente.'
             ]);
     }
 
@@ -200,7 +221,6 @@ class JustificationController extends Controller
      */
     public function destroy(Justification $justification)
     {
-
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
@@ -226,8 +246,6 @@ class JustificationController extends Controller
     public function getAvailableClasses(Request $request)
     {
         $validated = $request->validate([
-<<<<<<< HEAD
-<<<<<<< HEAD
             'weekday' => 'required|integer|between:0,6'
         ]);
 
@@ -254,46 +272,9 @@ class JustificationController extends Controller
             ->filter(function ($class) {
                 return $class->groups->isNotEmpty();
             })
-=======
-            'weekdays' => 'required|array',
-            'weekdays.*' => 'integer|between:0,6'
-=======
-            'weekday' => 'required|integer|between:0,6'
->>>>>>> parent of 5a56ee9 (Days selection has been corrected)
-        ]);
-
-        $weekday = $validated['weekday'];
-
-        $classes = UniversityClass::query()
-            ->with([
-                'faculty',
-                'groups.days'
-            ])
-            ->whereHas('groups.days', function($query) use ($weekday) {
-                $query->where('weekday', $weekday);
-            })
-            ->get()
-            ->map(function ($class) use ($weekday) {
-                $class->setRelation('groups', $class->groups->filter(function ($group) use ($weekday) {
-                    $group->setRelation('days', $group->days->filter(function ($day) use ($weekday) {
-                        return $day->weekday == $weekday;
-                    }));
-                    return $group->days->where('weekday', $weekday)->isNotEmpty();
-                })->values());
-                return $class;
-            })
-            ->filter(function ($class) {
-                return $class->groups->isNotEmpty();
-            })
->>>>>>> parent of 38d2976 (Show the classes from a date range)
             ->values();
 
         // Para asegurar JSON plano y sin problemas de colección
         return response()->json($classes->toArray());
-<<<<<<< HEAD
-   }
-}
-=======
     }
 }
->>>>>>> parent of 3a1f45f (Merge branch 'main' of https://github.com/ces-silv/Web-Design-Final-Project into feature/justifications)
