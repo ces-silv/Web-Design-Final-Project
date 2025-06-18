@@ -246,30 +246,35 @@ class JustificationController extends Controller
     public function getAvailableClasses(Request $request)
     {
         $validated = $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'weekday' => 'required|integer|between:0,6'
         ]);
 
-        // Calcula los días de la semana del rango
-        $start = new \DateTime($validated['start_date']);
-        $end = new \DateTime($validated['end_date']);
-        $weekdays = [];
-        while ($start <= $end) {
-            $dow = (int)$start->format('w'); // 0=domingo, 6=sábado
-            if (!in_array($dow, $weekdays)) {
-                $weekdays[] = $dow;
-            }
-            $start->modify('+1 day');
-        }
-        sort($weekdays);
+        $weekday = $validated['weekday'];
 
-        // Trae clases que tengan al menos un grupo con algún día en el rango seleccionado
-        $classes = \App\Models\UniversityClass::with(['faculty', 'groups.days'])
-            ->whereHas('groups.days', function ($q) use ($weekdays) {
-                $q->whereIn('weekday', $weekdays);
+        $classes = UniversityClass::query()
+            ->with([
+                'faculty',
+                'groups.days'
+            ])
+            ->whereHas('groups.days', function($query) use ($weekday) {
+                $query->where('weekday', $weekday);
             })
-            ->get();
+            ->get()
+            ->map(function ($class) use ($weekday) {
+                $class->setRelation('groups', $class->groups->filter(function ($group) use ($weekday) {
+                    $group->setRelation('days', $group->days->filter(function ($day) use ($weekday) {
+                        return $day->weekday == $weekday;
+                    }));
+                    return $group->days->where('weekday', $weekday)->isNotEmpty();
+                })->values());
+                return $class;
+            })
+            ->filter(function ($class) {
+                return $class->groups->isNotEmpty();
+            })
+            ->values();
 
+        // Para asegurar JSON plano y sin problemas de colección
         return response()->json($classes->toArray());
     }
 }

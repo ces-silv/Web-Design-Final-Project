@@ -70,10 +70,8 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-[#231f20] dark:text-gray-300">
-                                    {{ \Carbon\Carbon::parse($justification->start_date)->format('d/m/Y') }}
-                                </td>
-                                <td class="px-6 py-4 text-[#231f20] dark:text-gray-300">
-                                    {{ \Carbon\Carbon::parse($justification->end_date)->format('d/m/Y') }}
+                                    {{ $justification->start_date->format('d/m/Y') }} - 
+                                    {{ $justification->end_date->format('d/m/Y') }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex flex-col md:flex-row items-center justify-center gap-2">

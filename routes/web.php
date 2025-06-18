@@ -23,16 +23,18 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('professors', ProfessorController::class);
     Route::resource('classes', ClassController::class);
+<<<<<<< HEAD
     Route::view('/about', 'pages.about')->name('about');
     Route::resource('justifications', JustificationController::class);
 
     Route::get('/justifications/available-classes', [JustificationController::class, 'getAvailableClasses'])
     ->name('justifications.available-classes')
     ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
+=======
     Route::resource('justifications', JustificationController::class);
     Route::view('/about', 'pages.about')
     ->name('about');
-    Route::post('/available-classes', [\App\Http\Controllers\JustificationController::class, 'getAvailableClasses']);
+>>>>>>> 4a5c83abbc457871d86aac795b8f438d51554525
 });
 
 require __DIR__.'/auth.php';
