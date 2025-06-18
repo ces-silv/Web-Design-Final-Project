@@ -68,17 +68,17 @@ class JustificationController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $start = Carbon::parse($request->start_date);
                     $end = Carbon::parse($request->end_date);
-
+                    
                     $days = [];
                     for ($date = $start; $date->lte($end); $date->addDay()) {
                         $days[] = $date->dayOfWeek;
                     }
-
+                    
                     $hasValidDays = ClassGroup::where('class_id', $value)
                         ->whereHas('days', function($q) use ($days) {
                             $q->whereIn('weekday', array_unique($days));
                         })->exists();
-
+                    
                     if (!$hasValidDays) {
                         $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
                     }
@@ -122,7 +122,7 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-
+        
         return view('justifications.show', [
             'justification' => $justification->load(['class.faculty', 'student', 'document'])
         ]);
@@ -136,7 +136,7 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-
+        
         $classes = UniversityClass::with('faculty')->get();
         return view('justifications.edit', [
             'justification' => $justification,
@@ -152,7 +152,7 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-
+        
         $data = $request->validate([
             'description' => 'required|string',
             'start_date' => 'required|date',
@@ -163,17 +163,17 @@ class JustificationController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $start = Carbon::parse($request->start_date);
                     $end = Carbon::parse($request->end_date);
-
+                    
                     $days = [];
                     for ($date = $start; $date->lte($end); $date->addDay()) {
                         $days[] = $date->dayOfWeek;
                     }
-
+                    
                     $hasValidDays = ClassGroup::where('class_id', $value)
                         ->whereHas('days', function($q) use ($days) {
                             $q->whereIn('weekday', array_unique($days));
                         })->exists();
-
+                    
                     if (!$hasValidDays) {
                         $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
                     }
@@ -224,13 +224,13 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-
+        
         DB::transaction(function () use ($justification) {
             if ($justification->document) {
                 Storage::disk('public')->delete($justification->document->file_path);
                 $justification->document()->delete();
             }
-
+            
             $justification->delete();
         });
 
@@ -239,7 +239,7 @@ class JustificationController extends Controller
 
     /**
      * Obtiene las clases disponibles para un día específico de la semana
-     *
+     * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
