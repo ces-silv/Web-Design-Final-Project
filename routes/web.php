@@ -22,12 +22,17 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('professors', ProfessorController::class);
     Route::resource('classes', ClassController::class);
+<<<<<<< HEAD
     Route::view('/about', 'pages.about')->name('about');
     Route::resource('justifications', JustificationController::class);
 
     Route::get('/justifications/available-classes', [JustificationController::class, 'getAvailableClasses'])
     ->name('justifications.available-classes')
     ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
+=======
+    Route::view('/about', 'pages.about')
+    ->name('about');
+>>>>>>> parent of 4a5c83a (Merge pull request #7 from ces-silv/feature/crud-justificacion)
 });
 
 require __DIR__.'/auth.php';
