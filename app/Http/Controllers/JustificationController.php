@@ -68,17 +68,17 @@ class JustificationController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $start = Carbon::parse($request->start_date);
                     $end = Carbon::parse($request->end_date);
-                    
+
                     $days = [];
-                    for ($date = $start; $date->lte($end); $date->addDay()) {
-                        $days[] = $date->dayOfWeek;
+                    for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                        $days[] = $date->dayOfWeek; // 0=domingo, 6=sábado (Carbon)
                     }
-                    
+
                     $hasValidDays = ClassGroup::where('class_id', $value)
                         ->whereHas('days', function($q) use ($days) {
                             $q->whereIn('weekday', array_unique($days));
                         })->exists();
-                    
+
                     if (!$hasValidDays) {
                         $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
                     }
@@ -165,8 +165,8 @@ class JustificationController extends Controller
                     $end = Carbon::parse($request->end_date);
                     
                     $days = [];
-                    for ($date = $start; $date->lte($end); $date->addDay()) {
-                        $days[] = $date->dayOfWeek;
+                    for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                        $days[] = $date->dayOfWeek; // 0=domingo, 6=sábado (Carbon)
                     }
                     
                     $hasValidDays = ClassGroup::where('class_id', $value)
