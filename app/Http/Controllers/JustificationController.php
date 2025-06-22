@@ -234,7 +234,8 @@ class JustificationController extends Controller
             $justification->delete();
         });
 
-        return response()->json(null, 204);
+        return redirect()->route('justifications.index')
+            ->with('success', 'Justificación eliminada correctamente.');
     }
 
     /**

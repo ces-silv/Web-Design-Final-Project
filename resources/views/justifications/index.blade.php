@@ -69,8 +69,8 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-[#231f20] dark:text-gray-300">
-                                    {{ $justification->start_date->format('d/m/Y') }} - 
-                                    {{ $justification->end_date->format('d/m/Y') }}
+                                    {{ \Illuminate\Support\Carbon::parse($justification->start_date)->format('d/m/Y') }} - 
+                                    {{ \Illuminate\Support\Carbon::parse($justification->end_date)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex flex-col md:flex-row items-center justify-center gap-2">
@@ -94,14 +94,8 @@
                                               id="delete-justification-{{ $justification->id }}"
                                               class="inline-block">
                                             @csrf @method('DELETE')
-                                            <button type="button"
-                                                    class="swal-confirm w-8 h-8 flex items-center justify-center bg-red-600 hover:bg-red-500 text-white rounded-full transition"
-                                                    data-form-id="delete-justification-{{ $justification->id }}"
-                                                    data-title="{{ __('Eliminar justificación') }}"
-                                                    data-text="{{ __('¿Seguro que deseas eliminar esta justificación?') }}"
-                                                    data-icon="warning"
-                                                    data-confirm="{{ __('Sí, eliminar') }}"
-                                                    data-cancel="{{ __('Cancelar') }}"
+                                            <button type="submit"
+                                                    class="w-8 h-8 flex items-center justify-center bg-red-600 hover:bg-red-500 text-white rounded-full transition"
                                                     title="{{ __('Eliminar') }}">
                                                 <i class="fas fa-trash text-sm"></i>
                                             </button>
@@ -127,3 +121,17 @@
         </div>
     </div>
 </x-app-layout>
+{{-- SweetAlert de éxito --}}
+@if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '{{ session('success') }}',
+                confirmButtonColor: '#31c0d3'
+            });
+        });
+    </script>
+@endif
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
