@@ -13,13 +13,20 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-[#231f20] dark:text-gray-300 mb-1">
+                        {{ __('Estudiante') }}
+                    </label>
+                    <p class="text-[#231f20] dark:text-gray-100 bg-white/80 dark:bg-gray-700 px-4 py-2 rounded-lg border border-[#0b545b]/20 dark:border-gray-600">
+                        {{ $justification->student->name }} ({{ $justification->student->email }})
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#231f20] dark:text-gray-300 mb-1">
                         {{ __('Clase') }}
                     </label>
                     <p class="text-[#231f20] dark:text-gray-100 bg-white/80 dark:bg-gray-700 px-4 py-2 rounded-lg border border-[#0b545b]/20 dark:border-gray-600">
                         {{ $justification->class->name }} ({{ $justification->class->faculty->name }})
                     </p>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-[#231f20] dark:text-gray-300 mb-1">
                         {{ __('Periodo') }}
@@ -28,7 +35,6 @@
                         {{ $justification->start_date->format('d/m/Y') }} - {{ $justification->end_date->format('d/m/Y') }}
                     </p>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-[#231f20] dark:text-gray-300 mb-1">
                         {{ __('Descripción') }}
@@ -37,7 +43,21 @@
                         {{ $justification->description }}
                     </p>
                 </div>
-
+                <div>
+                    <label class="block text-sm font-medium text-[#231f20] dark:text-gray-300 mb-1">
+                        {{ __('Estado') }}
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $justification->status_class }}">
+                            {{ $justification->status_text }}
+                        </span>
+                        @if($justification->isPending())
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ __('Esperando revisión del administrador') }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-[#231f20] dark:text-gray-300 mb-1">
                         {{ __('Documentos') }}
@@ -65,14 +85,31 @@
                         </p>
                     @endif
                 </div>
-
-                <div class="pt-4 flex justify-end">
-                    <a href="{{ route('justifications.index') }}"
+                <div class="pt-4 flex justify-end gap-2">
+                    <a href="{{ route('dashboard') }}"
                        class="px-4 py-2 text-[#231f20] dark:text-gray-300 hover:bg-[#31c0d3]/10 dark:hover:bg-gray-700 rounded-lg transition">
-                        {{ __('Volver') }}
+                        {{ __('Volver al Dashboard') }}
                     </a>
+                    @if(auth()->user()->role === 'admin' && $justification->isPending())
+                        <form action="{{ route('justifications.approve', $justification) }}" method="POST" class="inline-block">
+                            @csrf
+                            <button type="submit"
+                                    class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
+                                    onclick="return confirm('¿Estás seguro de que deseas aprobar esta justificación?')">
+                                <i class="fas fa-check mr-1"></i> {{ __('Aprobar') }}
+                            </button>
+                        </form>
+                        <form action="{{ route('justifications.reject', $justification) }}" method="POST" class="inline-block">
+                            @csrf
+                            <button type="submit"
+                                    class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition"
+                                    onclick="return confirm('¿Estás seguro de que deseas rechazar esta justificación?')">
+                                <i class="fas fa-times mr-1"></i> {{ __('Rechazar') }}
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-app-layout> 

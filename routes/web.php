@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfessorController;
 use App\Http\Controllers\ClassController;
+use App\Http\Controllers\FacultyController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JustificationController;
 
@@ -11,9 +13,17 @@ Route::get('/', function () {
 });
 
 // Ruta dashboard protegida por auth, verified y ahora también por rol
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', 'role:user,admin'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:user,admin'])
+    ->name('dashboard');
+
+// Rutas de aprobación/rechazo de justificaciones (solo admin)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::post('/justifications/{justification}/approve', [DashboardController::class, 'approve'])
+        ->name('justifications.approve');
+    Route::post('/justifications/{justification}/reject', [DashboardController::class, 'reject'])
+        ->name('justifications.reject');
+});
 
 // Grupo de rutas de perfil - ahora verificamos rol también
 Route::middleware(['auth', 'role:user,admin'])->group(function () {
@@ -24,12 +34,19 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     Route::resource('classes', ClassController::class);
     Route::view('/about', 'pages.about')->name('about');
     Route::resource('justifications', JustificationController::class);
+    Route::get('/justifications/{justification}/download/{document}', [JustificationController::class, 'downloadDocument'])
+        ->name('justifications.download')
+        ->middleware(['auth']);
+    Route::resource('faculties', FacultyController::class);
 
     Route::get('/justifications/available-classes', [JustificationController::class, 'getAvailableClasses'])
     ->name('justifications.available-classes')
     ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
     Route::view('/about', 'pages.about')
     ->name('about');
+
+    Route::get('/dashboard/justifications/{justification}', [DashboardController::class, 'showJustification'])
+        ->name('dashboard.justifications.show');
 });
 
 require __DIR__.'/auth.php';

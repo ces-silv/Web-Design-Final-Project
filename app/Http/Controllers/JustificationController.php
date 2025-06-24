@@ -19,7 +19,7 @@ class JustificationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Justification::with(['class.faculty', 'student', 'document'])
+        $query = Justification::with(['class.faculty', 'student', 'documents'])
             ->where('student_id', auth()->id())
             ->when($request->filled('search'), function($q) use ($request) {
                 $q->where(function($query) use ($request) {
@@ -84,7 +84,12 @@ class JustificationController extends Controller
                     }
                 }
             ],
-            'document' => 'required|file|max:2048|mimes:pdf,jpg,png'
+            'documents.*' => 'required|file|max:2048|mimes:pdf,jpg,png'
+        ], [
+            'documents.*.required' => 'Al menos un documento es obligatorio.',
+            'documents.*.file' => 'El archivo debe ser válido.',
+            'documents.*.max' => 'Cada documento no puede superar 2MB.',
+            'documents.*.mimes' => 'Solo se permiten archivos PDF, JPG y PNG.'
         ]);
 
         DB::transaction(function () use ($data, $request) {
@@ -93,18 +98,22 @@ class JustificationController extends Controller
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
                 'university_class_id' => $data['university_class_id'],
-                'student_id' => auth()->id()
+                'student_id' => auth()->id(),
+                'status' => 'En Proceso'
             ]);
 
-            $file = $request->file('document');
-            $path = $file->store('justifications', 'public');
-
-            $justification->document()->create([
-                'file_path' => $path,
-                'file_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize()
-            ]);
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    $path = $file->store('justifications', 'public');
+                    
+                    $justification->documents()->create([
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize()
+                    ]);
+                }
+            }
         });
 
         return redirect()->route('justifications.index')
@@ -124,7 +133,7 @@ class JustificationController extends Controller
         }
         
         return view('justifications.show', [
-            'justification' => $justification->load(['class.faculty', 'student', 'document'])
+            'justification' => $justification->load(['class.faculty', 'student', 'documents'])
         ]);
     }
 
@@ -139,7 +148,7 @@ class JustificationController extends Controller
         
         $classes = UniversityClass::with('faculty')->get();
         return view('justifications.edit', [
-            'justification' => $justification,
+            'justification' => $justification->load(['class.faculty', 'student', 'documents']),
             'classes' => $classes
         ]);
     }
@@ -179,7 +188,13 @@ class JustificationController extends Controller
                     }
                 }
             ],
-            'document' => 'sometimes|file|max:2048|mimes:pdf,jpg,png'
+            'documents.*' => 'sometimes|file|max:2048|mimes:pdf,jpg,png',
+            'remove_documents' => 'sometimes|array',
+            'remove_documents.*' => 'exists:justification_documents,id'
+        ], [
+            'documents.*.file' => 'El archivo debe ser válido.',
+            'documents.*.max' => 'Cada documento no puede superar 2MB.',
+            'documents.*.mimes' => 'Solo se permiten archivos PDF, JPG y PNG.'
         ]);
 
         DB::transaction(function () use ($data, $request, $justification) {
@@ -190,22 +205,29 @@ class JustificationController extends Controller
                 'university_class_id' => $data['university_class_id']
             ]);
 
-            if ($request->hasFile('document')) {
-                // Eliminar documento anterior si existe
-                if ($justification->document) {
-                    Storage::disk('public')->delete($justification->document->file_path);
-                    $justification->document()->delete();
+            // Eliminar documentos marcados para eliminar
+            if ($request->has('remove_documents')) {
+                foreach ($request->remove_documents as $documentId) {
+                    $document = $justification->documents()->find($documentId);
+                    if ($document) {
+                        Storage::disk('public')->delete($document->file_path);
+                        $document->delete();
+                    }
                 }
+            }
 
-                $file = $request->file('document');
-                $path = $file->store('justifications', 'public');
-
-                $justification->document()->create([
-                    'file_path' => $path,
-                    'file_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getMimeType(),
-                    'size' => $file->getSize()
-                ]);
+            // Agregar nuevos documentos
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    $path = $file->store('justifications', 'public');
+                    
+                    $justification->documents()->create([
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize()
+                    ]);
+                }
             }
         });
 
@@ -224,18 +246,48 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-        
+
         DB::transaction(function () use ($justification) {
-            if ($justification->document) {
-                Storage::disk('public')->delete($justification->document->file_path);
-                $justification->document()->delete();
+            // Eliminar todos los documentos asociados
+            foreach ($justification->documents as $document) {
+                Storage::disk('public')->delete($document->file_path);
             }
-            
+            $justification->documents()->delete();
             $justification->delete();
         });
 
         return redirect()->route('justifications.index')
-            ->with('success', 'Justificación eliminada correctamente.');
+            ->with('alert', [
+                'type' => 'success',
+                'message' => 'Justificación eliminada exitosamente.'
+            ]);
+    }
+
+    /**
+     * Download a specific document associated with a justification.
+     */
+    public function downloadDocument(Justification $justification, JustificationDocument $document)
+    {
+        // Verificar que el usuario autenticado sea el propietario de la justificación
+        if ($justification->student_id !== auth()->id()) {
+            abort(403, 'No tienes permisos para descargar este documento.');
+        }
+
+        // Verificar que el documento pertenece a la justificación
+        if ($document->justification_id !== $justification->id) {
+            abort(404, 'El documento no pertenece a esta justificación.');
+        }
+
+        // Verificar que el archivo existe en el storage
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'El archivo no existe en el servidor.');
+        }
+
+        // Descargar el archivo
+        return Storage::disk('public')->download(
+            $document->file_path,
+            $document->file_name
+        );
     }
 
     /**
