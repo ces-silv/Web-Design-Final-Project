@@ -1,9 +1,9 @@
 @php
-    $isEdit = isset($justification) && $justification !== null;
+    $isEdit = isset($justification) && $justification && $justification->exists;
     $classes = $classes ?? [];
 @endphp
 
-<form action="{{ $isEdit ? route('justifications.update', $justification->id) : route('justifications.store') }}"
+<form action="{{ $isEdit ? route('justifications.update', $justification) : route('justifications.store') }}"
       method="POST"
       class="space-y-6"
       enctype="multipart/form-data"

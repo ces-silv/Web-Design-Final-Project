@@ -231,3 +231,10 @@
         </div>
     </div>
 </x-app-layout>
+
+{{-- 
+bg-yellow-200 text-yellow-900 dark:bg-yellow-300 dark:text-yellow-900 border-yellow-300 dark:border-yellow-400
+bg-green-200 text-green-900 dark:bg-green-300 dark:text-green-900 border-green-300 dark:border-green-400
+bg-red-200 text-red-900 dark:bg-red-300 dark:text-red-900 border-red-300 dark:border-red-400
+bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600
+--}}
