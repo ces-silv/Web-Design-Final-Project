@@ -27,6 +27,7 @@ class User extends Authenticatable
 
     // Constantes para roles
     const ROLE_ADMIN = 'admin';
+    const ROLE_PROFESSOR = 'professor';
     const ROLE_USER = 'user';
 
     // Constantes para estados
