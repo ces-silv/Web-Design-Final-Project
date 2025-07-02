@@ -8,6 +8,7 @@ use App\Models\UniversityClass;
 use App\Models\JustificationDocument;
 use App\Models\ClassGroup;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -100,13 +101,18 @@ class JustificationController extends Controller
                 'end_date' => $data['end_date'],
                 'university_class_id' => $data['university_class_id'],
                 'student_id' => auth()->id(),
-                'status' => 'En Proceso'
+                'status' => ['required',
+                    Rule::in([
+                        Justification::STATUS_PENDING,
+                        Justification::STATUS_APPROVED,
+                        Justification::STATUS_REJECTED,
+                ])],
             ]);
 
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $file) {
                     $path = $file->store('justifications', 'public');
-                    
+
                     $justification->documents()->create([
                         'file_path' => $path,
                         'file_name' => $file->getClientOriginalName(),
@@ -132,7 +138,7 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-        
+
         return view('justifications.show', [
             'justification' => $justification->load(['class.faculty', 'student', 'documents'])
         ]);
@@ -146,7 +152,7 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-        
+
         $classes = UniversityClass::with('faculty')->get();
         return view('justifications.edit', [
             'justification' => $justification->load(['class.faculty', 'student', 'documents']),
@@ -162,7 +168,7 @@ class JustificationController extends Controller
         if ($justification->student_id !== auth()->id()) {
             abort(403);
         }
-        
+
         $data = $request->validate([
             'description' => 'required|string',
             'start_date' => 'required|date',
@@ -173,17 +179,17 @@ class JustificationController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $start = Carbon::parse($request->start_date);
                     $end = Carbon::parse($request->end_date);
-                    
+
                     $days = [];
                     for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
                         $days[] = $date->dayOfWeek; // 0=domingo, 6=sábado (Carbon)
                     }
-                    
+
                     $hasValidDays = ClassGroup::where('class_id', $value)
                         ->whereHas('days', function($q) use ($days) {
                             $q->whereIn('weekday', array_unique($days));
                         })->exists();
-                    
+
                     if (!$hasValidDays) {
                         $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
                     }
@@ -203,7 +209,8 @@ class JustificationController extends Controller
                 'description' => $data['description'],
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
-                'university_class_id' => $data['university_class_id']
+                'university_class_id' => $data['university_class_id'],
+                'status' => $data['status'],
             ]);
 
             // Eliminar documentos marcados para eliminar
@@ -221,7 +228,7 @@ class JustificationController extends Controller
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $file) {
                     $path = $file->store('justifications', 'public');
-                    
+
                     $justification->documents()->create([
                         'file_path' => $path,
                         'file_name' => $file->getClientOriginalName(),
@@ -293,7 +300,7 @@ class JustificationController extends Controller
 
     /**
      * Obtiene las clases disponibles para un día específico de la semana
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -330,5 +337,23 @@ class JustificationController extends Controller
 
         // Para asegurar JSON plano y sin problemas de colección
         return response()->json($classes->toArray());
+    }
+
+    public function updateStatus(Request $request, Justification $justification)
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in([
+                Justification::STATUS_PENDING,
+                Justification::STATUS_APPROVED,
+                Justification::STATUS_REJECTED,
+            ])],
+        ]);
+
+        $justification->update(['status' => $data['status']]);
+
+        return back()->with('alert', [
+            'type'    => 'success',
+            'message' => 'Estado actualizado correctamente.',
+        ]);
     }
 }
