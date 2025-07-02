@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Professor;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class ProfessorController extends Controller
 {
@@ -76,15 +78,32 @@ class ProfessorController extends Controller
             'password.confirmed'  => 'Las contraseñas no coinciden.',
         ]);
 
-        $data['password'] = bcrypt($data['password']);
+        // Creación del profesor en la tabla de usuarios
+        DB::transaction(function () use ($data) {
+            $user = User::create([
+                'name'     => "{$data['first_name']} {$data['last_name']}",
+                'email'    => $data['email'],
+                'password' => bcrypt($data['password']),
+                'role'     => User::ROLE_PROFESSOR,
+                'status'   => User::STATUS_ACTIVE,
+            ]);
 
-        Professor::create($data);
+            // Creación del profesor en la tabla de profesores
+            Professor::create([
+                'first_name' => $data['first_name'],
+                'last_name'  => $data['last_name'],
+                'email'      => $data['email'],
+                'password'   => bcrypt($data['password']),
+            ]);
+        });
+
         return redirect()->route('professors.index')
             ->with('alert', [
                 'type'    => 'success', 
                 'message' => 'Profesor creado exitosamente.'
             ]);
     }
+
 
     /**
      * Display the specified resource.

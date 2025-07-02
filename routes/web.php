@@ -14,11 +14,11 @@ Route::get('/', function () {
 
 // Ruta dashboard protegida por auth, verified y ahora también por rol
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified', 'role:user,admin'])
+    ->middleware(['auth', 'verified', 'role:user,admin,professor'])
     ->name('dashboard');
 
 // Rutas de aprobación/rechazo de justificaciones (solo admin)
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'role:admin,professor'])->group(function () {
     Route::post('/justifications/{justification}/approve', [DashboardController::class, 'approve'])
         ->name('justifications.approve');
     Route::post('/justifications/{justification}/reject', [DashboardController::class, 'reject'])
@@ -26,7 +26,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // Grupo de rutas de perfil - ahora verificamos rol también
-Route::middleware(['auth', 'role:user,admin'])->group(function () {
+Route::middleware(['auth', 'role:user,admin,professor'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
