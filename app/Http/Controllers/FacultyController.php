@@ -9,6 +9,8 @@ class FacultyController extends Controller
 {
     public function index(Request $request)
     {
+
+
         $query = Faculty::query();
 
         // Búsqueda por nombre
@@ -76,4 +78,4 @@ class FacultyController extends Controller
         return redirect()->route('faculties.index')
             ->with('success', 'Facultad eliminada exitosamente.');
     }
-} 
+}

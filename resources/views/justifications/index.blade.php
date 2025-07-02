@@ -89,6 +89,7 @@
                                         </a>
 
                                         <!-- Delete Button -->
+                    @if(Auth::user()->role === "admin")
                                         <form action="{{ route('justifications.destroy', $justification) }}"
                                               method="POST"
                                               id="delete-justification-{{ $justification->id }}"
@@ -156,6 +157,9 @@
                     </button>
                 </div>
             </form>
+
+                    @endif
+
                         <!--
 
                         THIS IS A BLADE.PHP FILE YOU HAVE ACCESS TO THE $justification
