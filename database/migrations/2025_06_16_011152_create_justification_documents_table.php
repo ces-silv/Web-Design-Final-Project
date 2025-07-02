@@ -14,12 +14,15 @@ return new class extends Migration
         Schema::create('justification_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('justification_id')->constrained()->cascadeOnDelete();
-            $table->string('file_path');
+            $table->binary('file_content');
             $table->string('file_name');
             $table->string('mime_type');
             $table->unsignedInteger('size');
             $table->timestamps();
         });
+        // Change file_content to LONGBLOB to support larger files
+        // This is necessary for storing larger documents like PDFs or images
+        DB::statement('ALTER TABLE justification_documents MODIFY file_content LONGBLOB');
     }
 
     /**

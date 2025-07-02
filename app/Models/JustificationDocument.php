@@ -12,7 +12,7 @@ class JustificationDocument extends Model
 {
     protected $fillable = [
         'justification_id',
-        'file_path',
+        'file_content',
         'file_name',
         'mime_type',
         'size'
