@@ -157,7 +157,9 @@
                     </button>
                 </div>
             </form>
+
                     @endif
+
                         <!--
 
                         THIS IS A BLADE.PHP FILE YOU HAVE ACCESS TO THE $justification
