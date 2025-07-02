@@ -8,6 +8,7 @@ use App\Models\UniversityClass;
 use App\Models\JustificationDocument;
 use App\Models\ClassGroup;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class JustificationController extends Controller
@@ -82,11 +83,17 @@ class JustificationController extends Controller
                 'end_date' => $data['end_date'],
                 'university_class_id' => $data['university_class_id'],
                 'student_id' => auth()->id(),
-                'status' => 'En Proceso'
+                'status' => ['required',
+                    Rule::in([
+                        Justification::STATUS_PENDING,
+                        Justification::STATUS_APPROVED,
+                        Justification::STATUS_REJECTED,
+                ])],
             ]);
 
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $file) {
+
                     $justification->documents()->create([
                         'file_content' => file_get_contents($file->getRealPath()),
                         'file_name' => $file->getClientOriginalName(),
@@ -143,6 +150,7 @@ class JustificationController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $start = Carbon::parse($request->start_date);
                     $end = Carbon::parse($request->end_date);
+
                     $days = [];
 
                     for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
@@ -169,7 +177,8 @@ class JustificationController extends Controller
                 'description' => $data['description'],
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
-                'university_class_id' => $data['university_class_id']
+                'university_class_id' => $data['university_class_id'],
+                'status' => $data['status'],
             ]);
 
             if ($request->has('remove_documents')) {
@@ -183,6 +192,7 @@ class JustificationController extends Controller
 
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $file) {
+
                     $justification->documents()->create([
                         'file_content' => file_get_contents($file->getRealPath()),
                         'file_name' => $file->getClientOriginalName(),
@@ -231,6 +241,7 @@ class JustificationController extends Controller
             ->header('Content-Disposition', 'attachment; filename="'.$document->file_name.'"');
     }
 
+
     public function getAvailableClasses(Request $request)
     {
         $validated = $request->validate([
@@ -261,4 +272,24 @@ class JustificationController extends Controller
 
         return response()->json($classes->toArray());
     }
+
+
+    public function updateStatus(Request $request, Justification $justification)
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in([
+                Justification::STATUS_PENDING,
+                Justification::STATUS_APPROVED,
+                Justification::STATUS_REJECTED,
+            ])],
+        ]);
+
+        $justification->update(['status' => $data['status']]);
+
+        return back()->with('alert', [
+            'type'    => 'success',
+            'message' => 'Estado actualizado correctamente.',
+        ]);
+    }
+
 }

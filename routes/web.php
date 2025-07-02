@@ -44,6 +44,10 @@ Route::middleware(['auth', 'role:user,admin'])->group(function () {
     ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
     Route::view('/about', 'pages.about')
     ->name('about');
+    Route::patch(
+      '/justifications/{justification}/status',
+      [JustificationController::class, 'updateStatus']
+    )->name('justifications.updateStatus');
 
     Route::get('/dashboard/justifications/{justification}', [DashboardController::class, 'showJustification'])
         ->name('dashboard.justifications.show');
