@@ -12,6 +12,7 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    @if(Auth::user()->role === "admin")
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
@@ -24,6 +25,7 @@
                     <x-nav-link href="{{ route('professors.index')}}" :active="request()->routeIs('professors.*')">
                         {{ __('Profesores') }}
                     </x-nav-link>
+                    @endif
                     <x-nav-link href="{{ route('justifications.index')}}" :active="request()->routeIs('justifications.*')">
                         {{ __('Justificaciones') }}
                     </x-nav-link>

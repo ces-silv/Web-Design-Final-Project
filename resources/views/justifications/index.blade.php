@@ -69,7 +69,7 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-[#231f20] dark:text-gray-300">
-                                    {{ \Illuminate\Support\Carbon::parse($justification->start_date)->format('d/m/Y') }} - 
+                                    {{ \Illuminate\Support\Carbon::parse($justification->start_date)->format('d/m/Y') }} -
                                     {{ \Illuminate\Support\Carbon::parse($justification->end_date)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
@@ -89,6 +89,7 @@
                                         </a>
 
                                         <!-- Delete Button -->
+                    @if(Auth::user()->role === "admin")
                                         <form action="{{ route('justifications.destroy', $justification) }}"
                                               method="POST"
                                               id="delete-justification-{{ $justification->id }}"
@@ -100,6 +101,177 @@
                                                 <i class="fas fa-trash text-sm"></i>
                                             </button>
                                         </form>
+
+                                        <div x-data="{ open{{ $justification->id }} : false }">
+                                            <button @click="open{{ $justification->id }} = true" type="submit"
+                                                    class="w-8 h-8 flex bg-green-700 hover:bg-green-500 items-center justify-center text-white rounded-full transition"
+                                                    title="{{ __('Cambiar Estado') }}">
+                                                <i class="fa  fa-wheelchair-alt"></i>
+                                            </button>
+                                            <div x-show="open{{ $justification->id }}" @click.outside="open{{ $justification->id }} = false" x-cloak x-transition.opacity class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+<div @click.outside="open{{ $justification->id }} = false"
+                                                class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-2xl mx-4 p-6 rounded shadow-lg overflow-y-auto max-h-[90vh] transition-colors">
+          <form
+                action="{{ route('justifications.updateStatus', $justification) }}"
+                method="POST"
+            >
+                @csrf
+                @method('PATCH')
+
+                <div class="mb-4">
+                    <label for="status-{{ $justification->id }}" class="block text-sm font-medium">
+                        Estado
+                    </label>
+                    <select
+                        id="status-{{ $justification->id }}"
+                        name="status"
+                        class="mt-1 block w-full rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    >
+<option
+            value="{{ \App\Models\Justification::STATUS_PENDING }}"
+            @selected($justification->status === \App\Models\Justification::STATUS_PENDING)
+          >En Proceso</option>
+          <option
+            value="{{ \App\Models\Justification::STATUS_APPROVED }}"
+            @selected($justification->status === \App\Models\Justification::STATUS_APPROVED)
+          >Aceptada</option>
+          <option
+            value="{{ \App\Models\Justification::STATUS_REJECTED }}"
+            @selected($justification->status === \App\Models\Justification::STATUS_REJECTED)
+          >Rechazada</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button
+                        type="button"
+                        @click="open{{ $justification->id }} = false"
+                        class="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 rounded bg-green-600 hover:bg-green-500 text-white"
+                    >
+                        Guardar
+                    </button>
+                </div>
+            </form>
+                    @endif
+                        <!--
+
+                        THIS IS A BLADE.PHP FILE YOU HAVE ACCESS TO THE $justification
+                        PUT A SELECT COMPONENT to update the statuses 'En Proceso' 'Aceptada' & 'Rechazada'
+
+class Justification extends Model
+{
+    protected $fillable = [
+        'description',
+        'start_date',
+        'end_date',
+        'university_class_id',
+        'student_id',
+        'status'
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
+
+    // Constantes para los estados
+    const STATUS_PENDING = 'En Proceso';
+    const STATUS_APPROVED = 'Aceptada';
+    const STATUS_REJECTED = 'Rechazada';
+}
+
+     */
+    public function update(Request $request, Justification $justification)
+    {
+        if ($justification->student_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'description' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'university_class_id' => [
+                'required',
+                'exists:classes,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $start = Carbon::parse($request->start_date);
+                    $end = Carbon::parse($request->end_date);
+
+                    $days = [];
+                    for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                        $days[] = $date->dayOfWeek; // 0=domingo, 6=sábado (Carbon)
+                    }
+
+                    $hasValidDays = ClassGroup::where('class_id', $value)
+                        ->whereHas('days', function($q) use ($days) {
+                            $q->whereIn('weekday', array_unique($days));
+                        })->exists();
+
+                    if (!$hasValidDays) {
+                        $fail('La clase seleccionada no tiene horarios en las fechas indicadas.');
+                    }
+                }
+            ],
+            'documents.*' => 'sometimes|file|max:2048|mimes:pdf,jpg,png',
+            'remove_documents' => 'sometimes|array',
+            'remove_documents.*' => 'exists:justification_documents,id'
+        ], [
+            'documents.*.file' => 'El archivo debe ser válido.',
+            'documents.*.max' => 'Cada documento no puede superar 2MB.',
+            'documents.*.mimes' => 'Solo se permiten archivos PDF, JPG y PNG.'
+        ]);
+
+        DB::transaction(function () use ($data, $request, $justification) {
+            $justification->update([
+                'description' => $data['description'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+                'university_class_id' => $data['university_class_id']
+            ]);
+
+            // Eliminar documentos marcados para eliminar
+            if ($request->has('remove_documents')) {
+                foreach ($request->remove_documents as $documentId) {
+                    $document = $justification->documents()->find($documentId);
+                    if ($document) {
+                        Storage::disk('public')->delete($document->file_path);
+                        $document->delete();
+                    }
+                }
+            }
+
+            // Agregar nuevos documentos
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    $path = $file->store('justifications', 'public');
+
+                    $justification->documents()->create([
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize()
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('justifications.index')
+            ->with('alert', [
+                'type' => 'success',
+                'message' => 'Justificación actualizada exitosamente.'
+            ]);
+    }
+
+
+                        --->
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
