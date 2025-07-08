@@ -88,7 +88,7 @@
                 <option :value="classItem.id" x-text="classItem.name + ' (' + classItem.faculty.name + ')'"></option>
             </template>
         </select>
-        
+
         {{-- Mensajes de estado --}}
         <div x-show="isLoading" class="mt-2 text-sm text-[#0b545b] dark:text-[#31c0d3]">
             <i class="fas fa-spinner fa-spin mr-2"></i> {{ __('Cargando clases disponibles...') }}
@@ -97,7 +97,7 @@
         <div x-show="!isLoading && availableClasses.length === 0 && weekday !== null" class="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
             {{ __('No se encontraron clases para el día seleccionado.') }}
         </div>
-        
+
         <div class="@error('university_class_id') flex @else hidden @enderror items-center gap-1.5 text-red-600 dark:text-red-400 text-xs mt-1 bg-red-50 dark:bg-[#3C0000] p-1.5 border border-red-300 dark:border-red-700 rounded">
             <i class="fa-solid fa-circle-exclamation"></i>
             <span>@error('university_class_id'){{ $message }}@enderror</span>
@@ -114,7 +114,7 @@
                class="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#31c0d3] file:text-white hover:file:bg-[#0b545b] dark:file:bg-[#0b545b] dark:hover:file:bg-[#31c0d3] transition"
                x-ref="documentsInput"
                @change="updateDocumentsPreview()"/>
-        
+
         {{-- Vista previa de documentos nuevos --}}
         <template x-if="documentsPreview.length > 0">
             <div class="mt-2 space-y-1">
@@ -129,7 +129,7 @@
                 </template>
             </div>
         </template>
-        
+
         {{-- Documentos existentes en edición --}}
         @if($isEdit && $justification->documents->count() > 0)
             <div class="mt-3">
@@ -161,7 +161,7 @@
                 </div>
             </div>
         @endif
-        
+
         <div class="@error('documents.*') flex @else hidden @enderror items-center gap-1.5 text-red-600 dark:text-red-400 text-xs mt-1 bg-red-50 dark:bg-[#3C0000] p-1.5 border border-red-300 dark:border-red-700 rounded">
             <i class="fa-solid fa-circle-exclamation"></i>
             <span>@error('documents.*'){{ $message }}@enderror</span>
@@ -185,175 +185,89 @@
     </div>
 </form>
 
-{{-- Alpine.js Component --}}
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('justificationForm', () => ({
-        // Modelos
+        // 1) Raw data never changes
+        allClasses: @json($classes),
+
+        // 2) What the <select> shows
+        availableClasses: [],
+
+        // form state
         description: @json(old('description', $justification->description ?? '')),
-        startDate: @json(old('start_date', $justification->start_date ? $justification->start_date->format('Y-m-d') : '')),
-        endDate: @json(old('end_date', $justification->end_date ? $justification->end_date->format('Y-m-d') : '')),
-        university_class_id: @json(old('university_class_id', $justification->university_class_id ? (string)$justification->university_class_id : '')),
+        startDate:   @json(old('start_date',   $justification->start_date?->format('Y-m-d') ?? '')),
+        endDate:     @json(old('end_date',     $justification->end_date?->format('Y-m-d')   ?? '')),
+        university_class_id: @json(old('university_class_id', (string)($justification->university_class_id ?? ''))),
         weekday: null,
-        
-        // Estado
-        availableClasses: @json($classes),
-        isLoading: false,
-        error: null,
         documentsPreview: [],
-        
-        // Métodos
+
         init() {
-            
-            // Si estamos en edición, establecer el weekday inicial
-            if (this.startDate) {
+            // On edit, seed the initial filter
+            if (this.startDate && this.endDate) {
                 this.updateWeekday();
             }
-            
-            // Si estamos en edición y hay una clase seleccionada, asegurar que esté en availableClasses
-            if (this.university_class_id && this.availableClasses.length > 0) {
-                const selectedClass = this.availableClasses.find(c => c.id == this.university_class_id);
-                console.log('Selected class found:', selectedClass);
-                if (!selectedClass) {
-                    // Si la clase no está en availableClasses, agregarla
-                    @if(isset($justification) && $justification->class)
-                        const classToAdd = {
-                            id: {{ $justification->class->id }},
-                            name: @json($justification->class->name),
-                            faculty: {
-                                id: {{ $justification->class->faculty->id }},
-                                name: @json($justification->class->faculty->name)
-                            }
-                        };
-                        this.availableClasses.push(classToAdd);
-                        console.log('Added class to availableClasses:', classToAdd);
-                    @endif
-                }
-            }
-            
-            // Forzar la actualización del select después de que Alpine.js termine de inicializar
-            this.$nextTick(() => {
-                if (this.university_class_id) {
-                    console.log('Final university_class_id after nextTick:', this.university_class_id);
-                    // Forzar la actualización del select
-                    const select = document.getElementById('university_class_id');
-                    if (select) {
-                        select.value = this.university_class_id;
-                    }
-                }
-            });
         },
-        
+
         updateEndDate() {
-            if (this.startDate && this.endDate && new Date(this.endDate) < new Date(this.startDate)) {
+            if (this.startDate && this.endDate
+                && new Date(this.endDate) < new Date(this.startDate)) {
                 this.endDate = this.startDate;
             }
         },
-        
+
         updateWeekday() {
             if (!this.startDate || !this.endDate) {
                 this.weekday = null;
-                return;
-            }
-            function parseLocalDate(str) {
-                const [year, month, day] = str.split('-').map(Number);
-                return new Date(year, month - 1, day);
-            }
-            const start = parseLocalDate(this.startDate);
-            const end = parseLocalDate(this.endDate);
-            let days = [];
-            let seen = new Set();
-            let d = new Date(start);
-            while (d <= end) {
-                const dayNum = d.getDay();
-                if (!seen.has(dayNum)) {
-                    days.push(dayNum);
-                    seen.add(dayNum);
-                }
-                d.setDate(d.getDate() + 1);
-            }
-            this.weekday = days;
-        },
-        getWeekdayNames(weekday) {
-            const weekdays = [
-                'Domingo', 'Lunes', 'Martes', 'Miércoles', 
-                'Jueves', 'Viernes', 'Sábado'
-            ];
-            if (Array.isArray(weekday)) {
-                return weekday.map(d => weekdays[d]).join(', ');
-            }
-            return weekdays[weekday];
-        },
-        
-        async fetchAvailableClasses() {
-            if (this.weekday === null) {
                 this.availableClasses = [];
                 return;
             }
-            
-            this.isLoading = true;
-            this.error = null;
-            
-            // Guardar la clase seleccionada actualmente
-            const currentSelectedClass = this.availableClasses.find(c => c.id == this.university_class_id);
-            
-            try {
-                const response = await fetch(`/justifications/available-classes?weekday=${this.weekday}`);
-                
-                if (!response.ok) {
-                    throw new Error('Error al cargar las clases');
+
+            // 3) Build a Set of all weekdays in the range
+            const [y1,m1,d1] = this.startDate.split('-').map(Number);
+            const [y2,m2,d2] = this.endDate.split('-').map(Number);
+            let s = new Date(y1, m1 - 1, d1),
+                e = new Date(y2, m2 - 1, d2),
+                days = new Set();
+
+            while (s <= e) {
+                days.add(s.getDay());
+                s.setDate(s.getDate() + 1);
+            }
+
+            this.weekday = Array.from(days);
+
+            // 4) Filter allClasses by group.days ∩ selected weekdays
+            this.availableClasses = this.allClasses.filter(c =>
+                c.groups.some(g =>
+                    g.days.some(d => days.has(Number(d.weekday)))
+                )
+            );
+
+            // 5) Preserve existing selection when editing
+            if (this.university_class_id) {
+                const kept = this.allClasses.find(c => c.id == this.university_class_id);
+                if (kept && !this.availableClasses.some(c => c.id == kept.id)) {
+                    this.availableClasses.push(kept);
                 }
-                
-                const data = await response.json();
-                this.availableClasses = data;
-                
-                // Si estamos en edición y teníamos una clase seleccionada, asegurar que esté disponible
-                if (currentSelectedClass && !this.availableClasses.some(c => c.id == currentSelectedClass.id)) {
-                    this.availableClasses.push(currentSelectedClass);
-                }
-                
-                // Si la clase previamente seleccionada ya no está disponible, limpiar la selección
-                if (this.university_class_id && !this.availableClasses.some(c => c.id == this.university_class_id)) {
-                    this.university_class_id = '';
-                }
-            } catch (err) {
-                console.error('Error:', err);
-                this.error = 'No se pudieron cargar las clases para el día seleccionado.';
-                this.availableClasses = [];
-            } finally {
-                this.isLoading = false;
             }
         },
-        
-        async fetchClassDetails(classId) {
-            try {
-                const response = await fetch(`/api/classes/${classId}`);
-                if (response.ok) {
-                    const classData = await response.json();
-                    // Agregar a availableClasses si no existe
-                    if (!this.availableClasses.some(c => c.id == classData.id)) {
-                        this.availableClasses.push(classData);
-                    }
-                }
-            } catch (err) {
-                console.error('Error al cargar detalles de la clase:', err);
-            }
+
+        getWeekdayNames(arr) {
+            const names = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+            return arr.map(i => names[i]).join(', ');
         },
-        
+
         updateDocumentsPreview() {
             const files = this.$refs.documentsInput.files;
-            if (files.length > 0) {
-                this.documentsPreview = Array.from(files).map(file => ({
-                    name: file.name,
-                    size: file.size,
-                    type: file.type
-                }));
-            }
+            this.documentsPreview = Array.from(files).map(f => ({
+                name: f.name, size: f.size, type: f.type
+            }));
         },
-        
-        removeDocumentPreview(index) {
-            this.documentsPreview.splice(index, 1);
-        }
+
+        removeDocumentPreview(i) {
+            this.documentsPreview.splice(i, 1);
+        },
     }));
 });
 </script>

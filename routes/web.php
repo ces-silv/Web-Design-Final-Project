@@ -23,6 +23,9 @@ Route::middleware(['auth', 'role:admin,professor'])->group(function () {
         ->name('justifications.approve');
     Route::post('/justifications/{justification}/reject', [DashboardController::class, 'reject'])
         ->name('justifications.reject');
+    Route::resource('professors', ProfessorController::class);
+    Route::resource('classes', ClassController::class);
+    Route::resource('faculties', FacultyController::class);
 });
 
 // Grupo de rutas de perfil - ahora verificamos rol también
@@ -30,27 +33,22 @@ Route::middleware(['auth', 'role:user,admin,professor'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::resource('professors', ProfessorController::class);
-    Route::resource('classes', ClassController::class);
     Route::view('/about', 'pages.about')->name('about');
     Route::resource('justifications', JustificationController::class);
     Route::get('/justifications/{justification}/download/{document}', [JustificationController::class, 'downloadDocument'])
         ->name('justifications.download')
         ->middleware(['auth']);
-    Route::resource('faculties', FacultyController::class);
-
     Route::get('/justifications/available-classes', [JustificationController::class, 'getAvailableClasses'])
     ->name('justifications.available-classes')
     ->middleware(['auth']); // Asegura que solo usuarios autenticados puedan acceder
     Route::view('/about', 'pages.about')
     ->name('about');
+    Route::get('/dashboard/justifications/{justification}', [DashboardController::class, 'showJustification'])
+        ->name('dashboard.justifications.show');
     Route::patch(
       '/justifications/{justification}/status',
       [JustificationController::class, 'updateStatus']
     )->name('justifications.updateStatus');
-
-    Route::get('/dashboard/justifications/{justification}', [DashboardController::class, 'showJustification'])
-        ->name('dashboard.justifications.show');
 });
 
 require __DIR__.'/auth.php';
