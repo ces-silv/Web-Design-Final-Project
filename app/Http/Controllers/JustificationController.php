@@ -41,7 +41,7 @@ class JustificationController extends Controller
     public function create()
     {
         $justification = new Justification();
-        $classes = UniversityClass::with('faculty')->get();
+        $classes = UniversityClass::with(['faculty','groups.days'])->get();
         return view('justifications.create', compact('justification', 'classes'));
     }
 
@@ -127,7 +127,8 @@ class JustificationController extends Controller
             abort(403);
         }
 
-        $classes = UniversityClass::with('faculty')->get();
+
+        $classes = UniversityClass::with(['faculty','groups.days'])->get();
         return view('justifications.edit', [
             'justification' => $justification->load(['class.faculty', 'student', 'documents']),
             'classes' => $classes
